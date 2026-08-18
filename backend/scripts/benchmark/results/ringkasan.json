@@ -1,0 +1,29 @@
+{
+  "picks": {
+    "mcq": "gemini-3.5-flash-lite",
+    "short": "gemini-3.5-flash-lite",
+    "essay": "gemini-3.5-flash-lite"
+  },
+  "rows": [
+    {
+      "model": "gemini-3.5-flash-lite",
+      "status": "OK",
+      "mcq": 100.0,
+      "short": 100.0,
+      "essay": 95.0,
+      "json_valid": true,
+      "items": 8,
+      "latency_s": 5.03
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "status": "OK",
+      "mcq": 100.0,
+      "short": 100.0,
+      "essay": 95.0,
+      "json_valid": true,
+      "items": 8,
+      "latency_s": 11.9
+    }
+  ]
+}

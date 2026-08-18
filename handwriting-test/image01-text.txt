@@ -1,0 +1,3 @@
+1. Penjabaran Persamaan dan subtitus (Halaman 3-7)
+A) Gambar 2 : Contoh aplikasi persamaan diferensial
+	.> Falling stone : y" = y = const. (Persamaan gerak jatuh bebas, percepatan konstan)

@@ -1,0 +1,7 @@
+Pemodelan masing2 persamaan diffferensial
+1. Falling stone
+	y" = g = const
+	m . y" = mg -> y" = g
+2. Parachutist 
+	mv' = mg - bv2
+	m dv/dt = mg - bv2

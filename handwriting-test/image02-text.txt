@@ -1,0 +1,5 @@
+Bagian 1 : Persamaan
+1. Definisi  & bentuk Pers. Diferensial biasa
+	- ODE orde-n : Persamaan yang memuat turunan fungsi tdk diketahui y(x)
+			terhadap 1 variable bebas x. dengan turunan tertinggi
+			berorde n

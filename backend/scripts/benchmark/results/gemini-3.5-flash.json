@@ -1,0 +1,72 @@
+{
+  "model": "gemini-3.5-flash",
+  "latency_s": 11.9,
+  "used_schema": true,
+  "error": null,
+  "items": [
+    {
+      "item_id": "mcq1",
+      "extracted_text": "b",
+      "similarity_score": 100,
+      "is_correct": true,
+      "confidence": 1.0,
+      "reason": "Siswa memilih pilihan b dengan menyilang kotak b."
+    },
+    {
+      "item_id": "mcq2",
+      "extracted_text": "c",
+      "similarity_score": 100,
+      "is_correct": true,
+      "confidence": 1.0,
+      "reason": "Siswa memilih pilihan c dengan menyilang kotak c."
+    },
+    {
+      "item_id": "mcq3",
+      "extracted_text": "a",
+      "similarity_score": 100,
+      "is_correct": true,
+      "confidence": 1.0,
+      "reason": "Siswa memilih pilihan a dengan menyilang kotak a."
+    },
+    {
+      "item_id": "short1",
+      "extracted_text": "4",
+      "similarity_score": 100,
+      "is_correct": true,
+      "confidence": 1.0,
+      "reason": "Jawaban siswa adalah '4', yang tepat sesuai dengan kunci jawaban."
+    },
+    {
+      "item_id": "short2",
+      "extracted_text": "jakarta",
+      "similarity_score": 100,
+      "is_correct": true,
+      "confidence": 1.0,
+      "reason": "Jawaban siswa adalah 'jakarta', yang tepat sesuai dengan kunci jawaban."
+    },
+    {
+      "item_id": "short3",
+      "extracted_text": "fotosintesis",
+      "similarity_score": 100,
+      "is_correct": true,
+      "confidence": 1.0,
+      "reason": "Jawaban siswa adalah 'fotosintesis', yang tepat sesuai dengan kunci jawaban."
+    },
+    {
+      "item_id": "essay1",
+      "extracted_text": "kurung, misal x kuadrat tambah lima x tambah enam menjadi kurung x tambah dua dikali kurung x tambah tiga. Kemudian samakan setiap kurung dengan nol, jadi x sama dengan minus dua atau",
+      "similarity_score": 90,
+      "is_correct": true,
+      "confidence": 0.95,
+      "reason": "Siswa menjelaskan langkah pemfaktoran dengan menggunakan contoh konkret secara runtut dan tepat, mencakup pengubahan ke bentuk kurung dan menyamakan dengan nol."
+    },
+    {
+      "item_id": "essay2",
+      "extracted_text": "Fotosintesis adalah proses pembuatan makanan pada tumbuhan menggunakan cahaya matahari, air, dan karbon dioksida. Hasil dari proses ini adalah glukosa dan oksigen.",
+      "similarity_score": 100,
+      "is_correct": true,
+      "confidence": 1.0,
+      "reason": "Jawaban siswa sangat lengkap dan akurat, mencakup definisi, bahan-bahan yang digunakan, serta hasil dari proses fotosintesis."
+    }
+  ]
+}

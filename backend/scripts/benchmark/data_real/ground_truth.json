@@ -1,0 +1,44 @@
+[
+  {
+    "id": "image01",
+    "task": "transcribe",
+    "key": "",
+    "student_text": "1. Penjabaran Persamaan dan subtitus (Halaman 3-7)\nA) Gambar 2 : Contoh aplikasi persamaan diferensial\n\t.> Falling stone : y\" = y = const. (Persamaan gerak jatuh bebas, percepatan konstan)",
+    "expected_text": "1. Penjabaran Persamaan dan subtitus (Halaman 3-7)\nA) Gambar 2 : Contoh aplikasi persamaan diferensial\n\t.> Falling stone : y\" = y = const. (Persamaan gerak jatuh bebas, percepatan konstan)",
+    "score_range": [
+      0,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "C:\\coding\\geprekkumlot_hologyUB2026\\handwriting-test\\image01.png"
+  },
+  {
+    "id": "image02",
+    "task": "transcribe",
+    "key": "",
+    "student_text": "Bagian 1 : Persamaan\n1. Definisi  & bentuk Pers. Diferensial biasa\n\t- ODE orde-n : Persamaan yang memuat turunan fungsi tdk diketahui y(x)\n\t\t\tterhadap 1 variable bebas x. dengan turunan tertinggi\n\t\t\tberorde n",
+    "expected_text": "Bagian 1 : Persamaan\n1. Definisi  & bentuk Pers. Diferensial biasa\n\t- ODE orde-n : Persamaan yang memuat turunan fungsi tdk diketahui y(x)\n\t\t\tterhadap 1 variable bebas x. dengan turunan tertinggi\n\t\t\tberorde n",
+    "score_range": [
+      0,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "C:\\coding\\geprekkumlot_hologyUB2026\\handwriting-test\\image02.png"
+  },
+  {
+    "id": "image03",
+    "task": "transcribe",
+    "key": "",
+    "student_text": "Pemodelan masing2 persamaan diffferensial\n1. Falling stone\n\ty\" = g = const\n\tm . y\" = mg -> y\" = g\n2. Parachutist \n\tmv' = mg - bv2\n\tm dv/dt = mg - bv2",
+    "expected_text": "Pemodelan masing2 persamaan diffferensial\n1. Falling stone\n\ty\" = g = const\n\tm . y\" = mg -> y\" = g\n2. Parachutist \n\tmv' = mg - bv2\n\tm dv/dt = mg - bv2",
+    "score_range": [
+      0,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "C:\\coding\\geprekkumlot_hologyUB2026\\handwriting-test\\image03.png"
+  }
+]

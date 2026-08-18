@@ -1,0 +1,122 @@
+[
+  {
+    "id": "mcq1",
+    "task": "mcq",
+    "key": "b",
+    "student_text": "",
+    "expected_text": "b",
+    "score_range": [
+      100,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "images/mcq1.jpg"
+  },
+  {
+    "id": "mcq2",
+    "task": "mcq",
+    "key": "c",
+    "student_text": "",
+    "expected_text": "c",
+    "score_range": [
+      100,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "images/mcq2.jpg"
+  },
+  {
+    "id": "mcq3",
+    "task": "mcq",
+    "key": "a",
+    "student_text": "",
+    "expected_text": "a",
+    "score_range": [
+      100,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "images/mcq3.jpg"
+  },
+  {
+    "id": "short1",
+    "task": "short",
+    "key": "4 | akar kuadrat dari 16",
+    "student_text": "4",
+    "expected_text": "4",
+    "score_range": [
+      90,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "images/short1.jpg"
+  },
+  {
+    "id": "short2",
+    "task": "short",
+    "key": "Jakarta",
+    "student_text": "jakarta",
+    "expected_text": "jakarta",
+    "score_range": [
+      90,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "images/short2.jpg"
+  },
+  {
+    "id": "short3",
+    "task": "short",
+    "key": "fotosintesis",
+    "student_text": "fotosintesis",
+    "expected_text": "fotosintesis",
+    "score_range": [
+      90,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [],
+    "image": "images/short3.jpg"
+  },
+  {
+    "id": "essay1",
+    "task": "essay",
+    "key": "Langkah pemfaktoran: ubah persamaan menjadi bentuk (x+p)(x+q)=0 dengan p dan q adalah dua bilangan yang jika dikali menghasilkan c dan jika dijumlah menghasilkan b. Lalu setiap kurung disamakan dengan nol sehingga diperoleh dua nilai x.",
+    "student_text": "Pertama faktorkan persamaan menjadi dua kurung, misal x kuadrat tambah lima x tambah enam menjadi kurung x tambah dua dikali kurung x tambah tiga. Kemudian samakan setiap kurung dengan nol, jadi x sama dengan minus dua atau x sama dengan minus tiga.",
+    "expected_text": "",
+    "score_range": [
+      75,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [
+      "faktorkan",
+      "kurung",
+      "nol"
+    ],
+    "image": "images/essay1.jpg"
+  },
+  {
+    "id": "essay2",
+    "task": "essay",
+    "key": "Fotosintesis adalah proses tumbuhan membuat makanan dengan bantuan cahaya matahari, air, dan karbon dioksida. Hasilnya berupa glukosa dan oksigen.",
+    "student_text": "Fotosintesis adalah proses pembuatan makanan pada tumbuhan menggunakan cahaya matahari, air, dan karbon dioksida. Hasil dari proses ini adalah glukosa dan oksigen.",
+    "expected_text": "",
+    "score_range": [
+      75,
+      100
+    ],
+    "expected_correct": true,
+    "keywords": [
+      "cahaya",
+      "makanan",
+      "glukosa"
+    ],
+    "image": "images/essay2.jpg"
+  }
+]

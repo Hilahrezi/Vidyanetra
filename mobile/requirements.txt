@@ -1,0 +1,17 @@
+# Dependencies Mobile (Flutter) — REFERENSI SAJA.
+#
+# Flutter menggunakan pubspec.yaml sebagai sumber kebenaran (jangan install
+# lewat pip). File ini hanya dokumentasi versi paket runtime.
+#
+# Install sebenarnya:  flutter pub get   (membaca pubspec.yaml)
+
+camera==0.12.0+2              # akses kamera Android (preview + takePicture)
+dio==5.11.0                   # HTTP client (REST API + JWT interceptor)
+flutter_secure_storage==11.0.0  # penyimpanan token JWT (Android Keystore)
+image==4.9.1                  # decode/encode gambar + operasi piksel (pipeline pemindaian)
+provider==6.1.5+1             # state management (dipakai bila perlu; screens saat ini StatefulWidget)
+cupertino_icons==1.0.8        # ikon platform iOS (standar template)
+
+# --- Dev/test ---
+flutter_lints==6.0.0          # lint rules
+flutter_test (SDK)            # test framework

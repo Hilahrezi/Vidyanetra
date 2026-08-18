@@ -1,0 +1,25 @@
+# Dependencies Backend (Python/FastAPI) — versi DIPIN sesuai yang teruji.
+#
+# Install:  pip install -r requirements.txt
+# (Versi di bawah adalah yang benar-benar terinstal & teruji di venv,
+#  termasuk Python 3.14 + Windows. Kenaikan versi perlu re-test.)
+
+fastapi==0.141.1             # framework API (Swagger /docs)
+uvicorn[standard]==0.52.3    # ASGI server dev
+sqlalchemy==2.0.52           # ORM (SQLite dev / PostgreSQL prod)
+pydantic==2.13.4             # validasi & schema
+pydantic-settings==2.15.0    # config dari .env
+PyJWT==2.13.0                # token JWT
+bcrypt==5.0.0                # hash password (langsung, tanpa passlib — passlib rusak di bcrypt 5)
+python-multipart==0.0.32     # multipart/form-data (dibutuhkan FastAPI)
+google-genai==2.18.1         # SDK Gemini (yang lama google-generativeai deprecated)
+opencv-python-headless==5.0.0.93  # deteksi marker + homografi (template verify)
+numpy==2.5.2                 # pendamping OpenCV
+Pillow==12.3.0               # manipulasi gambar crop
+reportlab==5.0.0             # generate PDF template lembar jawaban
+pymupdf==1.28.2              # render PDF -> PNG (mode --verify template)
+python-dotenv==1.2.3         # baca .env
+httpx==0.28.1                # HTTP client (script benchmark/E2E)
+
+# --- dev/test ---
+pytest==9.1.1                # test suite (34 test hijau)
