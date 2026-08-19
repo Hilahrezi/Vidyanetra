@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import schemas
-from ..auth import create_access_token, hash_password, verify_password
+from ..auth import create_access_token, hash_password, require_teacher, verify_password
 from ..database import get_db
 from ..models import User
 
@@ -29,3 +29,8 @@ def register(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.get("/me", response_model=schemas.UserOut)
+def me(teacher: User = Depends(require_teacher)):
+    return teacher

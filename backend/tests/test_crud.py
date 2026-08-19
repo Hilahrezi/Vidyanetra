@@ -149,3 +149,24 @@ def test_cross_teacher_exam_creation(client, teacher_a, teacher_b):
         "/exams", json={"class_id": class_a["id"], "title": "Hack", "total_score": 100}, headers=auth_headers(teacher_b)
     )
     assert resp.status_code == 404
+
+
+def test_exam_template_pdf_generation(client, teacher_a):
+    class_ = _create_class(client, teacher_a)
+    exam = _create_exam(client, teacher_a, class_["id"])
+    headers = auth_headers(teacher_a)
+
+    # 400 if no questions
+    empty_resp = client.get(f"/exams/{exam['id']}/template.pdf", headers=headers)
+    assert empty_resp.status_code == 400
+
+    # Add questions
+    _create_question(client, teacher_a, exam["id"], number=1, qtype="mcq")
+    _create_question(client, teacher_a, exam["id"], number=2, qtype="short", key="Jawaban")
+    _create_question(client, teacher_a, exam["id"], number=3, qtype="essay", key="Gagasan")
+
+    resp = client.get(f"/exams/{exam['id']}/template.pdf", headers=headers)
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/pdf"
+    assert resp.content.startswith(b"%PDF")
+

@@ -1,5 +1,7 @@
 import csv
 import io
+import tempfile
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
@@ -8,6 +10,7 @@ from .. import models, schemas
 from ..auth import require_teacher
 from ..database import get_db
 from ..services.grading import effective_score
+from ..services.template_service import build_pdf
 
 router = APIRouter(prefix="/exams", tags=["exams"])
 
@@ -119,6 +122,43 @@ def export_exam_csv(exam_id: int, teacher=Depends(require_teacher), db: Session 
     )
 
 
+@router.get("/{exam_id}/template.pdf")
+def get_exam_template_pdf(exam_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
+    exam = _owned_exam(exam_id, teacher.id, db)
+    class_ = db.get(models.Class, exam.class_id)
+    class_name = class_.name if class_ else "Kelas"
+
+    questions = (
+        db.query(models.Question)
+        .filter(models.Question.exam_id == exam_id)
+        .order_by(models.Question.question_number)
+        .all()
+    )
+    if not questions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ujian belum memiliki butir soal. Tambahkan soal terlebih dahulu.",
+        )
+
+    question_types = [q.type for q in questions]
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+
+    try:
+        build_pdf(question_types, title=exam.title, class_name=class_name, out_pdf=tmp_path)
+        pdf_bytes = tmp_path.read_bytes()
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    filename = f"lembar_jawaban_exam_{exam_id}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.put("/{exam_id}", response_model=schemas.ExamOut)
 def update_exam(exam_id: int, payload: schemas.ExamCreate, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
     exam = _owned_exam(exam_id, teacher.id, db)
@@ -134,3 +174,4 @@ def delete_exam(exam_id: int, teacher=Depends(require_teacher), db: Session = De
     exam = _owned_exam(exam_id, teacher.id, db)
     db.delete(exam)
     db.commit()
+

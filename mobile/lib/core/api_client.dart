@@ -30,7 +30,12 @@ class ApiClient {
 
   Dio get dio => _dio;
 
+  void updateBaseUrl(String newUrl) {
+    _dio.options.baseUrl = newUrl;
+  }
+
   Future<void> loadToken() async {
+    _dio.options.baseUrl = AppConfig.apiBase;
     _token = await _storage.read(key: _tokenKey);
     if (_token != null) {
       _dio.options.headers['Authorization'] = 'Bearer $_token';
@@ -80,19 +85,78 @@ class ApiClient {
     return data['user'] as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> getMe() =>
+      _guard<Map<String, dynamic>>(() => _dio.get('/auth/me'));
+
   // ---- Master data ----
   Future<List<dynamic>> getClasses() => _guard<List<dynamic>>(() => _dio.get('/classes'));
+
+  Future<Map<String, dynamic>> createClass(String name, String gradeLevel) =>
+      _guard<Map<String, dynamic>>(() => _dio.post('/classes', data: {
+            'name': name,
+            'grade_level': gradeLevel,
+          }));
 
   Future<dynamic> getExam(int examId) => _guard<dynamic>(() => _dio.get('/exams/$examId'));
 
   Future<List<dynamic>> getExams({int? classId}) => _guard<List<dynamic>>(
       () => _dio.get('/exams', queryParameters: {'class_id': ?classId}));
 
+  Future<Map<String, dynamic>> createExam(int classId, String title, int totalScore) =>
+      _guard<Map<String, dynamic>>(() => _dio.post('/exams', data: {
+            'class_id': classId,
+            'title': title,
+            'total_score': totalScore,
+          }));
+
+  Future<void> deleteExam(int examId) =>
+      _guard<void>(() => _dio.delete('/exams/$examId'));
+
   Future<List<dynamic>> getQuestions(int examId) =>
       _guard<List<dynamic>>(() => _dio.get('/exams/$examId/questions'));
 
+  Future<Map<String, dynamic>> createQuestion(
+    int examId,
+    int questionNumber,
+    String type,
+    String answerKey,
+    double weight,
+  ) =>
+      _guard<Map<String, dynamic>>(() => _dio.post('/exams/$examId/questions', data: {
+            'question_number': questionNumber,
+            'type': type,
+            'answer_key': answerKey,
+            'weight': weight,
+          }));
+
+  Future<void> deleteQuestion(int questionId) =>
+      _guard<void>(() => _dio.delete('/questions/$questionId'));
+
   Future<List<dynamic>> getStudents(int classId) =>
       _guard<List<dynamic>>(() => _dio.get('/classes/$classId/students'));
+
+  // ---- Analytics & Submissions ----
+  Future<List<dynamic>> getExamSubmissions(int examId) =>
+      _guard<List<dynamic>>(() => _dio.get('/exams/$examId/submissions'));
+
+  Future<List<int>> downloadExamTemplatePdf(int examId) async {
+    try {
+      final resp = await _dio.get<List<int>>(
+        '/exams/$examId/template.pdf',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return resp.data!;
+    } on DioException catch (e) {
+      final msg = e.response?.data?['detail'] ?? _friendly(e);
+      throw ApiException(msg.toString());
+    }
+  }
+
+  Future<Map<String, dynamic>> getExamDistribution(int examId) =>
+      _guard<Map<String, dynamic>>(() => _dio.get('/analytics/exams/$examId/distribution'));
+
+  Future<Map<String, dynamic>> getQuestionDifficulty(int examId) =>
+      _guard<Map<String, dynamic>>(() => _dio.get('/analytics/exams/$examId/question-difficulty'));
 
   // ---- Submission ----
   Future<Map<String, dynamic>> uploadCrops(

@@ -70,12 +70,24 @@ export default function ExamDetailPage() {
           </Link>
           <h1 className="text-xl font-bold text-slate-800">Ujian #{id}</h1>
         </div>
-        <a
-          href={`/api/exams/${id}/export.csv`}
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-        >
-          Export CSV
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/api/exams/${id}/template.pdf`}
+            download
+            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700 shadow-sm transition"
+          >
+            <span>📄</span>
+            <span>Download PDF Lembar Jawaban</span>
+          </a>
+          <a
+            href={`/api/exams/${id}/export.csv`}
+            download
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-emerald-700 shadow-sm transition"
+          >
+            <span>📊</span>
+            <span>Export CSV</span>
+          </a>
+        </div>
       </header>
 
       <section className="mx-auto max-w-6xl space-y-6 p-6">

@@ -39,3 +39,11 @@ def test_protected_endpoint_requires_token(client):
 def test_invalid_token_rejected(client):
     resp = client.get("/classes", headers=auth_headers("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI5OTkifQ.invalid"))
     assert resp.status_code == 401
+
+
+def test_get_me_success(client, teacher_a):
+    resp = client.get("/auth/me", headers=auth_headers(teacher_a))
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["email"] == "guru_a@sekolah.id"
+    assert data["role"] == "teacher"

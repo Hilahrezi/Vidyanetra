@@ -24,8 +24,10 @@ Platform hybrid (Mobile Scanner + Web Dashboard) yang memanfaatkan Vision-Langua
 
 ```
 ├── architecture.md            # Dokumen arsitektur asli (English)
-├── docs/                      # 10 dokumen perencanaan + laporan eksekusi
-├── backend/                   # FastAPI (Python) — 41 test hijau
+├── docs/                      # 12 dokumen perancangan, koneksi Tailscale & alur kerja komprehensif
+│   ├── 11-koneksi-tailscale.md
+│   └── 12-alur-kerja-sistem-komprehensif.md
+├── backend/                   # FastAPI (Python) — 43 test hijau
 ├── mobile/                    # Flutter (Android) — pipeline pure Dart, 10 test
 └── web/                       # Next.js 16 — dashboard + BFF proxy
 ```
