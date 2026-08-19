@@ -51,5 +51,30 @@ def teacher_b(client):
     return _register(client, "guru_b@sekolah.id", "rahasia123")
 
 
+@pytest.fixture()
+def admin_user(client):
+    from app.auth import create_access_token, hash_password
+    from app.database import SessionLocal
+    from app.models import User
+
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == "admin_test@sekolah.id").first()
+        if not user:
+            user = User(
+                name="Admin Test",
+                email="admin_test@sekolah.id",
+                role="admin",
+                password_hash=hash_password("admin123"),
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return create_access_token(user.id, user.role)
+    finally:
+        db.close()
+
+
 def auth_headers(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
+

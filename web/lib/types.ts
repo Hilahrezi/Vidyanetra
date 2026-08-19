@@ -1,8 +1,49 @@
+export interface Class {
+  id: number;
+  teacher_id: number;
+  teacher_name?: string | null;
+  name: string;
+  grade_level: string;
+  subject: string;
+  students_count?: number;
+  exams_count?: number;
+}
+
+export interface Student {
+  id: number;
+  class_id: number;
+  name: string;
+  student_number: string;
+}
+
 export interface Exam {
   id: number;
   class_id: number;
   title: string;
   total_score: number;
+  class_name?: string | null;
+  subject?: string | null;
+  submissions_count?: number;
+  finalized_count?: number;
+  total_students?: number;
+  average_score?: number | null;
+}
+
+export interface DashboardOverview {
+  total_exams: number;
+  total_classes: number;
+  total_students: number;
+  overall_pass_rate: number;
+  pending_submissions_count: number;
+  recent_submissions_count: number;
+}
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  classes_count?: number;
 }
 
 export interface ExamSubmission {

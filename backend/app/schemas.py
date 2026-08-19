@@ -7,10 +7,24 @@ class ORMModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---- Auth ----
+# ---- Auth & Users ----
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: str = "teacher"  # "teacher" | "admin"
+
+
+class UserUpdate(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    password: str | None = None
+    role: str | None = None
 
 
 class UserOut(ORMModel):
@@ -18,6 +32,7 @@ class UserOut(ORMModel):
     role: str
     name: str
     email: str
+    classes_count: int = 0
 
 
 class TokenResponse(BaseModel):
@@ -30,17 +45,27 @@ class TokenResponse(BaseModel):
 class ClassCreate(BaseModel):
     name: str
     grade_level: str
+    subject: str = "Umum"
+    teacher_id: int | None = None
 
 
 class ClassUpdate(BaseModel):
     name: str | None = None
     grade_level: str | None = None
+    subject: str | None = None
+    teacher_id: int | None = None
 
 
 class ClassOut(ORMModel):
     id: int
+    teacher_id: int
+    teacher_name: str | None = None
     name: str
     grade_level: str
+    subject: str
+    students_count: int = 0
+    exams_count: int = 0
+
 
 
 # ---- Students ----
@@ -60,6 +85,7 @@ class StudentOut(ORMModel):
 class ExamCreate(BaseModel):
     class_id: int
     title: str
+    subject: str = "Umum"
     total_score: int = 100
 
 
@@ -68,6 +94,12 @@ class ExamOut(ORMModel):
     class_id: int
     title: str
     total_score: int
+    class_name: str | None = None
+    subject: str | None = None
+    submissions_count: int = 0
+    finalized_count: int = 0
+    total_students: int = 0
+    average_score: float | None = None
 
 
 # ---- Questions ----
@@ -146,3 +178,13 @@ class ReviewItem(BaseModel):
 
 class ReviewRequest(BaseModel):
     items: list[ReviewItem]
+
+
+class DashboardOverview(BaseModel):
+    total_exams: int
+    total_classes: int
+    total_students: int
+    overall_pass_rate: float
+    pending_submissions_count: int
+    recent_submissions_count: int
+

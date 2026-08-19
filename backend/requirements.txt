@@ -20,6 +20,8 @@ reportlab==5.0.0             # generate PDF template lembar jawaban
 pymupdf==1.28.2              # render PDF -> PNG (mode --verify template)
 python-dotenv==1.2.3         # baca .env
 httpx==0.28.1                # HTTP client (script benchmark/E2E)
+pymysql==1.1.2               # driver MySQL / MariaDB (phpMyAdmin)
+cryptography==46.0.6         # otentikasi aman MySQL 8+
 
 # --- dev/test ---
 pytest==9.1.1                # test suite (34 test hijau)

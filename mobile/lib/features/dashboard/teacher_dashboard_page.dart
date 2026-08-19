@@ -523,6 +523,13 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                             separatorBuilder: (_, __) => const SizedBox(height: 10),
                             itemBuilder: (context, i) {
                               final e = _exams![i];
+                              final className = e['class_name'] as String? ?? 'Kelas #${e['class_id']}';
+                              final subject = e['subject'] as String? ?? (className.contains(' — ') ? className.split(' — ')[0] : 'Mata Pelajaran');
+                              final cleanClass = className.contains(' — ') ? className.split(' — ')[1] : className;
+                              final totalStudents = (e['total_students'] as int?) ?? 1;
+                              final finalized = (e['finalized_count'] as int?) ?? 0;
+                              final progressPct = (finalized / (totalStudents > 0 ? totalStudents : 1) * 100).clamp(0, 100).toInt();
+
                               return Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
@@ -533,6 +540,37 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    // Badges
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFEEF2FF),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0xFFC7D2FE)),
+                                          ),
+                                          child: Text(
+                                            '📚 $subject',
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigo),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF0F9FF),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0xFFBAE6FD)),
+                                          ),
+                                          child: Text(
+                                            '🏫 $cleanClass',
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0369A1)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
                                     Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -542,9 +580,9 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                             color: Colors.indigo.withOpacity(0.1),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
-                                          child: const Icon(Icons.assignment, color: Colors.indigo, size: 22),
+                                          child: const Icon(Icons.assignment, color: Colors.indigo, size: 20),
                                         ),
-                                        const SizedBox(width: 12),
+                                        const SizedBox(width: 10),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -555,15 +593,46 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
-                                                'Total Bobot Nilai: ${e['total_score']}',
-                                                style: const TextStyle(fontSize: 12, color: Colors.black54),
+                                                'Total Bobot: ${e['total_score']} pt · Peserta: ${e['total_students'] ?? '-'} Siswa',
+                                                style: const TextStyle(fontSize: 11, color: Colors.black54),
                                               ),
                                             ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 10),
+                                    // Progress Bar Koreksi
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF8FAFC),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('Progres Koreksi', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.black54)),
+                                              Text('$finalized/${e['total_students'] ?? 0} Siswa ($progressPct%)', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(4),
+                                            child: LinearProgressIndicator(
+                                              value: progressPct / 100,
+                                              minHeight: 5,
+                                              backgroundColor: const Color(0xFFE2E8F0),
+                                              color: progressPct == 100 ? Colors.green : Colors.indigo,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
                                     const Divider(height: 1, color: Color(0xFFF1F5F9)),
                                     const SizedBox(height: 8),
                                     Row(

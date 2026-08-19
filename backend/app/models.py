@@ -30,6 +30,7 @@ class Class(Base):
     teacher_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     name: Mapped[str] = mapped_column(String(120))
     grade_level: Mapped[str] = mapped_column(String(20))
+    subject: Mapped[str] = mapped_column(String(120), default="Umum")
 
     teacher: Mapped[User] = relationship(back_populates="classes")
     students: Mapped[list["Student"]] = relationship(back_populates="class_", cascade="all, delete-orphan")
@@ -54,6 +55,7 @@ class Exam(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     class_id: Mapped[int] = mapped_column(ForeignKey("classes.id"))
     title: Mapped[str] = mapped_column(String(200))
+    subject: Mapped[str] = mapped_column(String(120), default="Umum")
     total_score: Mapped[int] = mapped_column(Integer, default=100)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
