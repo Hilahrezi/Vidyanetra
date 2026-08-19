@@ -23,7 +23,7 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
 
   // New exam form controllers
   final _titleCtrl = TextEditingController(text: 'Ujian Baru');
-  final _totalScoreCtrl = TextEditingController(text: '100');
+  final _subjectCtrl = TextEditingController(text: 'Matematika');
   int? _selectedClassId;
 
   @override
@@ -44,6 +44,7 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
       _classes = classes;
       if (_classes.isNotEmpty && _selectedClassId == null) {
         _selectedClassId = _classes.first['id'] as int;
+        _subjectCtrl.text = _classes.first['subject'] as String? ?? 'Matematika';
       }
 
       if (_currentExamId != null) {
@@ -70,12 +71,12 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
       return;
     }
 
-    final totalScore = int.tryParse(_totalScoreCtrl.text) ?? 100;
     try {
       final res = await ApiClient.instance.createExam(
         _selectedClassId!,
         _titleCtrl.text.trim(),
-        totalScore,
+        subject: _subjectCtrl.text.trim().isEmpty ? 'Umum' : _subjectCtrl.text.trim(),
+        totalScore: 0,
       );
       _currentExamId = res['id'] as int;
       _exam = res;
@@ -105,7 +106,7 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
     String selectedType = 'mcq';
     String mcqSelectedChoice = 'A';
     final answerKeyCtrl = TextEditingController(text: 'A');
-    final weightCtrl = TextEditingController(text: '10');
+    final weightCtrl = TextEditingController(text: '5');
 
     await showModalBottomSheet(
       context: context,
@@ -146,18 +147,27 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                 const SizedBox(height: 6),
                 SegmentedButton<String>(
                   segments: const [
-                    ButtonSegment(value: 'mcq', label: Text('Pilgan (MCQ)')),
-                    ButtonSegment(value: 'short', label: Text('Isian')),
-                    ButtonSegment(value: 'essay', label: Text('Esai')),
+                    ButtonSegment(value: 'mcq', label: Text('Pilgan (5pt)')),
+                    ButtonSegment(value: 'short', label: Text('Isian (10pt)')),
+                    ButtonSegment(value: 'essay', label: Text('Esai (20pt)')),
                   ],
                   selected: {selectedType},
                   onSelectionChanged: (set) {
                     setModalState(() {
                       selectedType = set.first;
                       if (selectedType == 'mcq') {
+                        weightCtrl.text = '5';
                         answerKeyCtrl.text = mcqSelectedChoice;
-                      } else if (answerKeyCtrl.text == 'A' || answerKeyCtrl.text == 'B' || answerKeyCtrl.text == 'C' || answerKeyCtrl.text == 'D') {
-                        answerKeyCtrl.clear();
+                      } else if (selectedType == 'short') {
+                        weightCtrl.text = '10';
+                        if (['A', 'B', 'C', 'D'].contains(answerKeyCtrl.text)) {
+                          answerKeyCtrl.clear();
+                        }
+                      } else if (selectedType == 'essay') {
+                        weightCtrl.text = '20';
+                        if (['A', 'B', 'C', 'D'].contains(answerKeyCtrl.text)) {
+                          answerKeyCtrl.clear();
+                        }
                       }
                     });
                   },
@@ -502,13 +512,34 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                     isDense: true,
                                   ),
                                   items: _classes.map((c) {
+                                    final subj = c['subject'] ?? 'Mapel';
+                                    final cName = c['name'] ?? 'Kelas';
+                                    final label = cName.toString().startsWith(subj) ? cName : '$subj — $cName';
                                     return DropdownMenuItem<int>(
                                       value: c['id'] as int,
-                                      child: Text('${c['name']} (Tingkat ${c['grade_level']})'),
+                                      child: Text('$label (Tingkat ${c['grade_level']})'),
                                     );
                                   }).toList(),
-                                  onChanged: (v) => setState(() => _selectedClassId = v),
+                                  onChanged: (v) {
+                                    setState(() {
+                                      _selectedClassId = v;
+                                      final c = _classes.firstWhere((item) => item['id'] == v, orElse: () => null);
+                                      if (c != null && c['subject'] != null) {
+                                        _subjectCtrl.text = c['subject'];
+                                      }
+                                    });
+                                  },
                                 ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _subjectCtrl,
+                                decoration: const InputDecoration(
+                                  labelText: 'Mata Pelajaran',
+                                  hintText: 'mis. Matematika, IPA, Bahasa Indonesia',
+                                  border: OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                              ),
                               const SizedBox(height: 12),
                               TextField(
                                 controller: _titleCtrl,
@@ -518,17 +549,6 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                   border: OutlineInputBorder(),
                                   isDense: true,
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: _totalScoreCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Total Bobot Nilai',
-                                  hintText: '100',
-                                  border: OutlineInputBorder(),
-                                  isDense: true,
-                                ),
-                                keyboardType: TextInputType.number,
                               ),
                               const SizedBox(height: 16),
                               FilledButton(
@@ -570,8 +590,8 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                         ),
                                         Text(
-                                          'Total Skor: ${_exam?['total_score']} | Jumlah Soal: ${_questions.length}',
-                                          style: const TextStyle(fontSize: 12, color: Colors.black54),
+                                          'Total Skor: ${_questions.fold<double>(0, (sum, q) => sum + ((q['weight'] as num?) ?? 0)).toInt()} pt (Akumulasi ${_questions.length} Butir Soal)',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.indigo),
                                         ),
                                       ],
                                     ),

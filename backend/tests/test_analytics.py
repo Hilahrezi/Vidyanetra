@@ -50,3 +50,17 @@ def test_export_csv(client, teacher_a):
     assert lines[0].startswith("No Absen,Nama,Status")
     assert len(lines) == 2  # header + 1 siswa
     assert lines[1].startswith("01,Ani,")
+
+
+def test_dashboard_overview(client, teacher_a):
+    exam_id, student_id, _ = _setup_exam(client, teacher_a)
+    _grade_all(client, teacher_a, exam_id, student_id, n_submissions=2)
+
+    resp = client.get("/analytics/overview", headers=auth_headers(teacher_a))
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total_exams"] >= 1
+    assert data["total_classes"] >= 1
+    assert data["total_students"] >= 1
+    assert "overall_pass_rate" in data
+

@@ -8,12 +8,14 @@ from ..database import get_db
 router = APIRouter(tags=["students"])
 
 
-def _owned_student(student_id: int, teacher_id: int, db: Session) -> models.Student:
+def _owned_student(student_id: int, user: models.User, db: Session) -> models.Student:
     student = db.get(models.Student, student_id)
     if student is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Siswa tidak ditemukan")
     class_ = db.get(models.Class, student.class_id)
-    if class_ is None or class_.teacher_id != teacher_id:
+    if class_ is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Siswa tidak ditemukan")
+    if user.role != "admin" and class_.teacher_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Siswa tidak ditemukan")
     return student
 
@@ -44,7 +46,7 @@ def bulk_create_students(class_id: int, payload: list[schemas.StudentCreate], te
 
 @router.put("/students/{student_id}", response_model=schemas.StudentOut)
 def update_student(student_id: int, payload: schemas.StudentCreate, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    student = _owned_student(student_id, teacher.id, db)
+    student = _owned_student(student_id, teacher, db)
     student.name = payload.name
     student.student_number = payload.student_number
     db.commit()
@@ -54,6 +56,7 @@ def update_student(student_id: int, payload: schemas.StudentCreate, teacher=Depe
 
 @router.delete("/students/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_student(student_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    student = _owned_student(student_id, teacher.id, db)
+    student = _owned_student(student_id, teacher, db)
     db.delete(student)
     db.commit()
+

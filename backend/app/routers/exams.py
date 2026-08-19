@@ -15,50 +15,119 @@ from ..services.template_service import build_pdf
 router = APIRouter(prefix="/exams", tags=["exams"])
 
 
-def _owned_exam(exam_id: int, teacher_id: int, db: Session) -> models.Exam:
+def _owned_exam(exam_id: int, user: models.User, db: Session) -> models.Exam:
     exam = db.get(models.Exam, exam_id)
     if exam is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ujian tidak ditemukan")
-    class_ = db.get(models.Class, exam.class_id)
-    if class_ is None or class_.teacher_id != teacher_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ujian tidak ditemukan")
+    if user.role != "admin":
+        class_ = db.get(models.Class, exam.class_id)
+        if class_ is None or class_.teacher_id != user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ujian tidak ditemukan")
     return exam
+
+
+def _enrich_exam(exam: models.Exam, db: Session) -> schemas.ExamOut:
+    class_ = db.get(models.Class, exam.class_id)
+    subject = exam.subject or (class_.subject if class_ else "Umum")
+    class_name = class_.name if class_ else None
+    formatted_class_name = (
+        f"{subject} — {class_name}"
+        if class_name and not class_name.startswith(f"{subject} — ")
+        else (class_name or "Kelas")
+    )
+    total_students = db.query(models.Student).filter(models.Student.class_id == exam.class_id).count()
+
+    subs = db.query(models.Submission).filter(models.Submission.exam_id == exam.id).all()
+    submissions_count = len(subs)
+    finalized_count = sum(1 for s in subs if s.status == "finalized")
+    scores = [s.total_score for s in subs if s.total_score is not None]
+    avg_score = round(sum(scores) / len(scores), 1) if scores else None
+
+    return schemas.ExamOut(
+        id=exam.id,
+        class_id=exam.class_id,
+        title=exam.title,
+        total_score=exam.total_score,
+        class_name=formatted_class_name,
+        subject=subject,
+        submissions_count=submissions_count,
+        finalized_count=finalized_count,
+        total_students=total_students,
+        average_score=avg_score,
+    )
 
 
 @router.get("", response_model=list[schemas.ExamOut])
-def list_exams(class_id: int | None = None, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    query = db.query(models.Exam)
+def list_exams(
+    class_id: int | None = None,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    if user.role == "admin":
+        query = db.query(models.Exam)
+    else:
+        query = db.query(models.Exam).join(models.Class).filter(models.Class.teacher_id == user.id)
+
     if class_id is not None:
         query = query.filter(models.Exam.class_id == class_id)
-    return query.all()
+    exams = query.all()
+    return [_enrich_exam(e, db) for e in exams]
 
 
 @router.post("", response_model=schemas.ExamOut, status_code=status.HTTP_201_CREATED)
-def create_exam(payload: schemas.ExamCreate, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
+def create_exam(
+    payload: schemas.ExamCreate,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
     class_ = db.get(models.Class, payload.class_id)
-    if class_ is None or class_.teacher_id != teacher.id:
+    if class_ is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kelas tidak ditemukan")
-    exam = models.Exam(**payload.model_dump())
+    if user.role != "admin" and class_.teacher_id != user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kelas tidak ditemukan")
+
+    data = payload.model_dump()
+    if not data.get("subject") or data.get("subject") == "Umum":
+        data["subject"] = class_.subject or "Umum"
+    exam = models.Exam(**data)
     db.add(exam)
     db.commit()
     db.refresh(exam)
-    return exam
+    return _enrich_exam(exam, db)
 
 
 @router.get("/{exam_id}", response_model=schemas.ExamOut)
-def get_exam(exam_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    return _owned_exam(exam_id, teacher.id, db)
+def get_exam(
+    exam_id: int,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    exam = _owned_exam(exam_id, user, db)
+    return _enrich_exam(exam, db)
 
 
 @router.get("/{exam_id}/questions", response_model=list[schemas.QuestionOut])
-def list_questions(exam_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    _owned_exam(exam_id, teacher.id, db)
-    return db.query(models.Question).filter(models.Question.exam_id == exam_id).order_by(models.Question.question_number).all()
+def list_questions(
+    exam_id: int,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    _owned_exam(exam_id, user, db)
+    return (
+        db.query(models.Question)
+        .filter(models.Question.exam_id == exam_id)
+        .order_by(models.Question.question_number)
+        .all()
+    )
 
 
 @router.get("/{exam_id}/submissions", response_model=list[schemas.ExamSubmissionOut])
-def list_exam_submissions(exam_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    _owned_exam(exam_id, teacher.id, db)
+def list_exam_submissions(
+    exam_id: int,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    _owned_exam(exam_id, user, db)
     submissions = (
         db.query(models.Submission)
         .filter(models.Submission.exam_id == exam_id)
@@ -74,16 +143,20 @@ def list_exam_submissions(exam_id: int, teacher=Depends(require_teacher), db: Se
             status=s.status,
             created_at=s.created_at,
             finalized_at=s.finalized_at,
-            student_name=s.student.name,
-            student_number=s.student.student_number,
+            student_name=s.student.name if s.student else None,
+            student_number=s.student.student_number if s.student else None,
         )
         for s in submissions
     ]
 
 
 @router.get("/{exam_id}/export.csv")
-def export_exam_csv(exam_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    exam = _owned_exam(exam_id, teacher.id, db)
+def export_exam_csv(
+    exam_id: int,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    exam = _owned_exam(exam_id, user, db)
     questions = (
         db.query(models.Question)
         .filter(models.Question.exam_id == exam_id)
@@ -99,15 +172,21 @@ def export_exam_csv(exam_id: int, teacher=Depends(require_teacher), db: Session 
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(["No Absen", "Nama", "Status"] + [f"Soal {q.question_number}" for q in questions] + ["Total"])
+    writer.writerow(
+        ["No Absen", "Nama", "Status"]
+        + [f"Soal {q.question_number}" for q in questions]
+        + ["Total"]
+    )
 
     for s in submissions:
         score_by_question = {}
         for d in s.details:
-            score_by_question[d.question_id] = effective_score(d) if d.status == "done" or d.manual_override else ""
+            score_by_question[d.question_id] = (
+                effective_score(d) if d.status == "done" or d.manual_override else ""
+            )
         row = [
-            s.student.student_number,
-            s.student.name,
+            s.student.student_number if s.student else "",
+            s.student.name if s.student else "",
             s.status,
         ]
         row += [score_by_question.get(q.id, "") for q in questions]
@@ -123,8 +202,12 @@ def export_exam_csv(exam_id: int, teacher=Depends(require_teacher), db: Session 
 
 
 @router.get("/{exam_id}/template.pdf")
-def get_exam_template_pdf(exam_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    exam = _owned_exam(exam_id, teacher.id, db)
+def get_exam_template_pdf(
+    exam_id: int,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    exam = _owned_exam(exam_id, user, db)
     class_ = db.get(models.Class, exam.class_id)
     class_name = class_.name if class_ else "Kelas"
 
@@ -160,18 +243,28 @@ def get_exam_template_pdf(exam_id: int, teacher=Depends(require_teacher), db: Se
 
 
 @router.put("/{exam_id}", response_model=schemas.ExamOut)
-def update_exam(exam_id: int, payload: schemas.ExamCreate, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    exam = _owned_exam(exam_id, teacher.id, db)
+def update_exam(
+    exam_id: int,
+    payload: schemas.ExamCreate,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    exam = _owned_exam(exam_id, user, db)
     exam.title = payload.title
     exam.total_score = payload.total_score
+    if payload.subject:
+        exam.subject = payload.subject
     db.commit()
     db.refresh(exam)
-    return exam
+    return _enrich_exam(exam, db)
 
 
 @router.delete("/{exam_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_exam(exam_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    exam = _owned_exam(exam_id, teacher.id, db)
+def delete_exam(
+    exam_id: int,
+    user: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    exam = _owned_exam(exam_id, user, db)
     db.delete(exam)
     db.commit()
-

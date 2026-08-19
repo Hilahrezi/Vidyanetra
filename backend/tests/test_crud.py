@@ -170,3 +170,53 @@ def test_exam_template_pdf_generation(client, teacher_a):
     assert resp.headers["content-type"] == "application/pdf"
     assert resp.content.startswith(b"%PDF")
 
+
+def test_class_and_exam_subject_relation(client, teacher_a):
+    headers = auth_headers(teacher_a)
+    # Create class with specific subject
+    resp = client.post("/classes", json={"name": "Kelas 8A", "grade_level": "8", "subject": "Matematika"}, headers=headers)
+    assert resp.status_code == 201
+    class_ = resp.json()
+    assert class_["subject"] == "Matematika"
+
+    # Create exam in that class with custom title
+    exam_resp = client.post(
+        "/exams",
+        json={"class_id": class_["id"], "title": "UTS Aljabar", "subject": "Matematika", "total_score": 100},
+        headers=headers,
+    )
+    assert exam_resp.status_code == 201
+    exam = exam_resp.json()
+    assert exam["subject"] == "Matematika"
+    assert "Matematika — Kelas 8A" in exam["class_name"]
+
+
+def test_auto_calculated_exam_score(client, teacher_a):
+    headers = auth_headers(teacher_a)
+    class_ = _create_class(client, teacher_a)
+    exam = _create_exam(client, teacher_a, class_["id"])
+    exam_id = exam["id"]
+
+    # 1. Add MCQ (weight 5)
+    q1 = _create_question(client, teacher_a, exam_id, number=1, qtype="mcq", weight=5)
+    e1 = client.get(f"/exams/{exam_id}", headers=headers).json()
+    assert e1["total_score"] == 5
+
+    # 2. Add Short Answer (weight 10)
+    q2 = _create_question(client, teacher_a, exam_id, number=2, qtype="short", weight=10)
+    e2 = client.get(f"/exams/{exam_id}", headers=headers).json()
+    assert e2["total_score"] == 15
+
+    # 3. Add Essay (weight 20)
+    q3 = _create_question(client, teacher_a, exam_id, number=3, qtype="essay", weight=20)
+    e3 = client.get(f"/exams/{exam_id}", headers=headers).json()
+    assert e3["total_score"] == 35
+
+    # 4. Delete Essay -> should be 15
+    del_resp = client.delete(f"/questions/{q3['id']}", headers=headers)
+    assert del_resp.status_code == 204
+    e4 = client.get(f"/exams/{exam_id}", headers=headers).json()
+    assert e4["total_score"] == 15
+
+
+

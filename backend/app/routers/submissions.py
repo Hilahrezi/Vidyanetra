@@ -18,11 +18,11 @@ router = APIRouter(prefix="/submissions", tags=["submissions"])
 MAX_PAYLOAD_BYTES = 5 * 1024 * 1024  # 5 MB total (base64)
 
 
-def _owned_submission(submission_id: int, teacher_id: int, db: Session) -> models.Submission:
+def _owned_submission(submission_id: int, user: models.User, db: Session) -> models.Submission:
     submission = db.get(models.Submission, submission_id)
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission tidak ditemukan")
-    _owned_exam(submission.exam_id, teacher_id, db)
+    _owned_exam(submission.exam_id, user, db)
     return submission
 
 
@@ -54,8 +54,8 @@ def _detail_to_schema(detail: models.SubmissionDetail) -> schemas.SubmissionDeta
     return schemas.SubmissionDetailOut(
         id=detail.id,
         question_id=detail.question_id,
-        question_number=detail.question.question_number,
-        type=detail.question.type,
+        question_number=detail.question.question_number if detail.question else 0,
+        type=detail.question.type if detail.question else "mcq",
         image_url=_image_url(detail.image_path),
         student_answer_text=detail.student_answer_text,
         similarity_score=detail.similarity_score,
@@ -74,10 +74,10 @@ def _detail_to_schema(detail: models.SubmissionDetail) -> schemas.SubmissionDeta
 def upload_crops(
     payload: schemas.UploadCropsRequest,
     background: BackgroundTasks,
-    teacher=Depends(require_teacher),
+    teacher: models.User = Depends(require_teacher),
     db: Session = Depends(get_db),
 ):
-    exam = _owned_exam(payload.exam_id, teacher.id, db)
+    exam = _owned_exam(payload.exam_id, teacher, db)
     student = db.get(models.Student, payload.student_id)
     if student is None or student.class_id != exam.class_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Siswa tidak ditemukan")
@@ -137,13 +137,21 @@ def upload_crops(
 
 
 @router.get("/{submission_id}", response_model=schemas.SubmissionOut)
-def get_submission(submission_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    return _owned_submission(submission_id, teacher.id, db)
+def get_submission(
+    submission_id: int,
+    teacher: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    return _owned_submission(submission_id, teacher, db)
 
 
 @router.get("/{submission_id}/details", response_model=schemas.SubmissionWithDetailsOut)
-def get_submission_details(submission_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    submission = _owned_submission(submission_id, teacher.id, db)
+def get_submission_details(
+    submission_id: int,
+    teacher: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    submission = _owned_submission(submission_id, teacher, db)
     details = (
         db.query(models.SubmissionDetail)
         .filter(models.SubmissionDetail.submission_id == submission_id)
@@ -158,22 +166,26 @@ def get_submission_details(submission_id: int, teacher=Depends(require_teacher),
         status=submission.status,
         created_at=submission.created_at,
         finalized_at=submission.finalized_at,
-        student_name=submission.student.name,
+        student_name=submission.student.name if submission.student else None,
         details=[_detail_to_schema(d) for d in details],
     )
 
 
 @router.put("/{submission_id}/review", response_model=schemas.SubmissionOut)
 def review_submission(
-    submission_id: int, payload: schemas.ReviewRequest, teacher=Depends(require_teacher), db: Session = Depends(get_db)
+    submission_id: int,
+    payload: schemas.ReviewRequest,
+    teacher: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
 ):
-    submission = _owned_submission(submission_id, teacher.id, db)
+    submission = _owned_submission(submission_id, teacher, db)
     if submission.status == "finalized":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission sudah di-final-kan")
 
     for item in payload.items:
         detail = db.query(models.SubmissionDetail).filter(
-            models.SubmissionDetail.submission_id == submission_id, models.SubmissionDetail.question_id == item.question_id
+            models.SubmissionDetail.submission_id == submission_id,
+            models.SubmissionDetail.question_id == item.question_id,
         ).first()
         if detail is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Soal {item.question_id} tidak ada di submission")
@@ -188,10 +200,10 @@ def review_submission(
 def retry_failed(
     submission_id: int,
     background: BackgroundTasks,
-    teacher=Depends(require_teacher),
+    teacher: models.User = Depends(require_teacher),
     db: Session = Depends(get_db),
 ):
-    submission = _owned_submission(submission_id, teacher.id, db)
+    submission = _owned_submission(submission_id, teacher, db)
     if submission.status == "finalized":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission sudah di-final-kan")
 
@@ -209,8 +221,12 @@ def retry_failed(
 
 
 @router.post("/{submission_id}/finalize", response_model=schemas.SubmissionOut)
-def finalize_submission(submission_id: int, teacher=Depends(require_teacher), db: Session = Depends(get_db)):
-    submission = _owned_submission(submission_id, teacher.id, db)
+def finalize_submission(
+    submission_id: int,
+    teacher: models.User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    submission = _owned_submission(submission_id, teacher, db)
     if submission.status == "finalized":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission sudah di-final-kan")
 
