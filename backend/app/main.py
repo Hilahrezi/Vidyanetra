@@ -79,10 +79,16 @@ _auto_migrate_and_seed()
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
 
+# Origin list parsing
+allowed_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+if settings.cors_origins:
+    extra = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]
+    allowed_origins.extend(extra)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|100\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?",
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|.*\.vercel\.app|100\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -105,17 +105,27 @@ def question_difficulty(
         .all()
     )
 
+    if not questions:
+        return {"exam_id": exam_id, "questions": []}
+
+    q_ids = [q.id for q in questions]
+    all_details = (
+        db.query(models.SubmissionDetail)
+        .join(models.Submission, models.Submission.id == models.SubmissionDetail.submission_id)
+        .filter(
+            models.SubmissionDetail.question_id.in_(q_ids),
+            models.Submission.status.in_(FINAL_STATUSES),
+        )
+        .all()
+    )
+
+    details_by_qid: dict[int, list[models.SubmissionDetail]] = {qid: [] for qid in q_ids}
+    for d in all_details:
+        details_by_qid[d.question_id].append(d)
+
     result = []
     for q in questions:
-        details = (
-            db.query(models.SubmissionDetail)
-            .join(models.Submission, models.Submission.id == models.SubmissionDetail.submission_id)
-            .filter(
-                models.SubmissionDetail.question_id == q.id,
-                models.Submission.status.in_(FINAL_STATUSES),
-            )
-            .all()
-        )
+        details = details_by_qid.get(q.id, [])
         scores = [effective_score(d) for d in details if effective_score(d) is not None]
         result.append(
             {

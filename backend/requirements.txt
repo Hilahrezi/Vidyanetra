@@ -22,6 +22,7 @@ python-dotenv==1.2.3         # baca .env
 httpx==0.28.1                # HTTP client (script benchmark/E2E)
 pymysql==1.1.2               # driver MySQL / MariaDB (phpMyAdmin)
 cryptography==46.0.6         # otentikasi aman MySQL 8+
+psycopg2-binary==2.9.10      # driver PostgreSQL (Supabase / Neon / Cloud)
 
 # --- dev/test ---
 pytest==9.1.1                # test suite (34 test hijau)

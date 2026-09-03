@@ -41,6 +41,7 @@ Seluruh dokumentasi teknis dan panduan operasional tersusun rapi di folder [`doc
 | **08** | [**Spesifikasi Web Dashboard**](docs/08-spesifikasi-web-dashboard.md) | Next.js 16 BFF proxy, analitik asesmen, RBAC Admin, dan roster siswa. |
 | **09** | [**Panduan Jaringan Nirkabel Tailscale**](docs/09-panduan-jaringan-nirkabel-tailscale.md) | Prosedur koneksi nirkabel HP-ke-PC via Tailscale Mesh tanpa kabel USB. |
 | **10** | [**Panduan Database MySQL & phpMyAdmin**](docs/10-panduan-database-mysql-phpmyadmin.md) | Langkah integrasi MySQL / MariaDB (XAMPP) dan pengelolaan phpMyAdmin. |
+| **11** | [**Panduan Deployment Cloud Gratis**](docs/11-panduan-deployment-cloud-gratis.md) | Panduan deployment 100% free tier (Supabase + Koyeb + Vercel) dan log efisiensi. |
 
 ---
 

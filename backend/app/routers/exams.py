@@ -4,6 +4,7 @@ import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -71,7 +72,62 @@ def list_exams(
     if class_id is not None:
         query = query.filter(models.Exam.class_id == class_id)
     exams = query.all()
-    return [_enrich_exam(e, db) for e in exams]
+    if not exams:
+        return []
+
+    exam_ids = [e.id for e in exams]
+    class_ids = list({e.class_id for e in exams})
+
+    # 1 Query untuk ambil semua kelas terkait
+    classes = {c.id: c for c in db.query(models.Class).filter(models.Class.id.in_(class_ids)).all()}
+
+    # 1 Query agregasi hitung total siswa per kelas
+    student_counts_raw = (
+        db.query(models.Student.class_id, func.count(models.Student.id))
+        .filter(models.Student.class_id.in_(class_ids))
+        .group_by(models.Student.class_id)
+        .all()
+    )
+    student_counts = dict(student_counts_raw)
+
+    # 1 Query untuk ambil semua submissions terkait
+    subs_by_exam: dict[int, list[models.Submission]] = {eid: [] for eid in exam_ids}
+    all_subs = db.query(models.Submission).filter(models.Submission.exam_id.in_(exam_ids)).all()
+    for s in all_subs:
+        subs_by_exam[s.exam_id].append(s)
+
+    result: list[schemas.ExamOut] = []
+    for exam in exams:
+        class_ = classes.get(exam.class_id)
+        subject = exam.subject or (class_.subject if class_ else "Umum")
+        class_name = class_.name if class_ else None
+        formatted_class_name = (
+            f"{subject} — {class_name}"
+            if class_name and not class_name.startswith(f"{subject} — ")
+            else (class_name or "Kelas")
+        )
+        total_students = student_counts.get(exam.class_id, 0)
+        subs = subs_by_exam.get(exam.id, [])
+        submissions_count = len(subs)
+        finalized_count = sum(1 for s in subs if s.status == "finalized")
+        scores = [s.total_score for s in subs if s.total_score is not None]
+        avg_score = round(sum(scores) / len(scores), 1) if scores else None
+
+        result.append(
+            schemas.ExamOut(
+                id=exam.id,
+                class_id=exam.class_id,
+                title=exam.title,
+                total_score=exam.total_score,
+                class_name=formatted_class_name,
+                subject=subject,
+                submissions_count=submissions_count,
+                finalized_count=finalized_count,
+                total_students=total_students,
+                average_score=avg_score,
+            )
+        )
+    return result
 
 
 @router.post("", response_model=schemas.ExamOut, status_code=status.HTTP_201_CREATED)

@@ -1,0 +1,14 @@
+.git
+.venv
+backend/.venv
+web/node_modules
+web/.next
+mobile/build
+mobile/.dart_tool
+handwriting-test/
+uploads/
+backend/uploads/
+*.pyc
+__pycache__
+*.db
+.env

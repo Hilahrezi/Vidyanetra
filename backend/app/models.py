@@ -27,7 +27,7 @@ class Class(Base):
     __tablename__ = "classes"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    teacher_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    teacher_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(120))
     grade_level: Mapped[str] = mapped_column(String(20))
     subject: Mapped[str] = mapped_column(String(120), default="Umum")
@@ -41,7 +41,7 @@ class Student(Base):
     __tablename__ = "students"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    class_id: Mapped[int] = mapped_column(ForeignKey("classes.id"))
+    class_id: Mapped[int] = mapped_column(ForeignKey("classes.id"), index=True)
     name: Mapped[str] = mapped_column(String(120))
     student_number: Mapped[str] = mapped_column(String(30))
 
@@ -53,7 +53,7 @@ class Exam(Base):
     __tablename__ = "exams"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    class_id: Mapped[int] = mapped_column(ForeignKey("classes.id"))
+    class_id: Mapped[int] = mapped_column(ForeignKey("classes.id"), index=True)
     title: Mapped[str] = mapped_column(String(200))
     subject: Mapped[str] = mapped_column(String(120), default="Umum")
     total_score: Mapped[int] = mapped_column(Integer, default=100)
@@ -68,7 +68,7 @@ class Question(Base):
     __tablename__ = "questions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    exam_id: Mapped[int] = mapped_column(ForeignKey("exams.id"))
+    exam_id: Mapped[int] = mapped_column(ForeignKey("exams.id"), index=True)
     question_number: Mapped[int] = mapped_column(Integer)
     type: Mapped[str] = mapped_column(String(10))  # mcq | short | essay
     answer_key: Mapped[str] = mapped_column(String(1000))
@@ -82,10 +82,10 @@ class Submission(Base):
     __tablename__ = "submissions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    exam_id: Mapped[int] = mapped_column(ForeignKey("exams.id"))
-    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"))
+    exam_id: Mapped[int] = mapped_column(ForeignKey("exams.id"), index=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"), index=True)
     total_score: Mapped[float | None] = mapped_column(Float, nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending | grading | graded | finalized
+    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)  # pending | grading | graded | finalized
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     finalized_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
@@ -98,15 +98,15 @@ class SubmissionDetail(Base):
     __tablename__ = "submission_details"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    submission_id: Mapped[int] = mapped_column(ForeignKey("submissions.id"))
-    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
+    submission_id: Mapped[int] = mapped_column(ForeignKey("submissions.id"), index=True)
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"), index=True)
     image_path: Mapped[str] = mapped_column(String(500))
     student_answer_text: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     similarity_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_correct: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     ai_reasoning: Mapped[str | None] = mapped_column(String(2000), nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending | done | failed
+    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)  # pending | done | failed
     model_used: Mapped[str | None] = mapped_column(String(80), nullable=True)
     mobile_answer: Mapped[str | None] = mapped_column(String(10), nullable=True)  # hasil CV mobile (MCQ)
     mobile_ambiguous: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -11,9 +11,10 @@ class Settings(BaseSettings):
     app_name: str = "AutoGrading API"
     database_url: str = "sqlite:///./autograding.db"
 
-    jwt_secret: str = "change-me"
+    jwt_secret: str = "autograding-secure-jwt-secret-key-32bytes-min"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 480
+    cors_origins: str = ""  # Comma-separated extra origins, e.g. "https://my-app.vercel.app"
 
     gemini_api_key: str = ""
     gemini_model_mcq: str = "gemini-3.5-flash-lite"

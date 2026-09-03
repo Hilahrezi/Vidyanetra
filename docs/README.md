@@ -21,6 +21,7 @@ Seluruh dokumentasi disusun secara modular, terstruktur, dan bebas redundansi:
 | **08** | [**Spesifikasi Web Dashboard**](08-spesifikasi-web-dashboard.md) | Next.js 16 (App Router + Turbopack), arsitektur BFF Proxy (httpOnly Cookie), visualisasi analitik asesmen, Manajemen Pengguna, dan Manajemen Kelas/Rombel. |
 | **09** | [**Panduan Jaringan Nirkabel Tailscale**](09-panduan-jaringan-nirkabel-tailscale.md) | Prosedur koneksi nirkabel HP Android fisik ke server lokal PC melalui *mesh VPN* Tailscale tanpa kabel USB / `adb reverse`. |
 | **10** | [**Panduan Database MySQL & phpMyAdmin**](10-panduan-database-mysql-phpmyadmin.md) | Langkah integrasi database MySQL / MariaDB (XAMPP / Laragon) dan pengelolaan skema via antarmuka web GUI phpMyAdmin. |
+| **11** | [**Panduan Deployment Cloud Gratis**](11-panduan-deployment-cloud-gratis.md) | Panduan deployment 100% free tier (Supabase PostgreSQL + Koyeb/Render FastAPI + Vercel Next.js 16) dan log optimasi performa. |
 
 ---
 
