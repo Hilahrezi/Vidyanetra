@@ -8,8 +8,10 @@ os.environ["JWT_EXPIRE_MINUTES"] = "60"
 import pytest
 from fastapi.testclient import TestClient
 
-from app.database import Base, engine
+from app.auth import create_access_token, decode_token, hash_password
+from app.database import Base, SessionLocal, engine
 from app.main import app
+from app.models import User
 
 TEST_DB = "test_autograding.db"
 
@@ -29,7 +31,7 @@ def client():
         yield c
 
 
-def _register(client: TestClient, email: str, password: str) -> dict:
+def _register(client: TestClient, email: str, password: str) -> str:
     resp = client.post("/auth/register", json={"email": email, "password": password})
     if resp.status_code == 409:
         login = client.post("/auth/login", json={"email": email, "password": password})
@@ -53,10 +55,6 @@ def teacher_b(client):
 
 @pytest.fixture()
 def admin_user(client):
-    from app.auth import create_access_token, hash_password
-    from app.database import SessionLocal
-    from app.models import User
-
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.email == "admin_test@sekolah.id").first()
@@ -78,3 +76,41 @@ def admin_user(client):
 def auth_headers(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
+
+def get_token_user_id(token: str) -> int:
+    payload = decode_token(token)
+    return int(payload["sub"])
+
+
+def create_test_class(
+    client: TestClient,
+    admin_token: str,
+    teacher_token: str,
+    name: str = "Kelas 8A",
+    grade: str = "8",
+    subject: str = "Matematika",
+) -> int:
+    teacher_id = get_token_user_id(teacher_token)
+    resp = client.post(
+        "/classes",
+        json={"name": name, "grade_level": grade, "subject": subject, "teacher_id": teacher_id},
+        headers=auth_headers(admin_token),
+    )
+    assert resp.status_code == 201
+    return resp.json()["id"]
+
+
+def create_test_student(
+    client: TestClient,
+    admin_token: str,
+    class_id: int,
+    name: str = "Ani",
+    number: str = "01",
+) -> int:
+    resp = client.post(
+        f"/classes/{class_id}/students",
+        json={"name": name, "student_number": number},
+        headers=auth_headers(admin_token),
+    )
+    assert resp.status_code == 201
+    return resp.json()["id"]

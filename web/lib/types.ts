@@ -96,6 +96,8 @@ export interface SubmissionDetail {
   mobile_answer: string | null;
   manual_override: boolean;
   overridden_score: number | null;
+  weight?: number;
+  answer_key?: string | null;
 }
 
 export interface SubmissionWithDetails {
@@ -105,5 +107,6 @@ export interface SubmissionWithDetails {
   total_score: number | null;
   status: string;
   student_name: string | null;
+  student_number?: string | null;
   details: SubmissionDetail[];
 }

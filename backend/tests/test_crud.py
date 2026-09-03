@@ -1,14 +1,16 @@
-from tests.conftest import auth_headers
-
-
-def _create_class(client, token, name="Kelas 8A", grade="8"):
-    resp = client.post("/classes", json={"name": name, "grade_level": grade}, headers=auth_headers(token))
-    assert resp.status_code == 201
-    return resp.json()
+from tests.conftest import (
+    auth_headers,
+    create_test_class,
+    create_test_student,
+)
 
 
 def _create_exam(client, token, class_id):
-    resp = client.post("/exams", json={"class_id": class_id, "title": "UTS", "total_score": 100}, headers=auth_headers(token))
+    resp = client.post(
+        "/exams",
+        json={"class_id": class_id, "title": "UTS", "total_score": 100},
+        headers=auth_headers(token),
+    )
     assert resp.status_code == 201
     return resp.json()
 
@@ -24,33 +26,33 @@ def _create_question(client, token, exam_id, number=1, qtype="mcq", key="A", wei
 
 
 # ---- Classes ----
-def test_class_crud(client, teacher_a):
+def test_class_crud(client, teacher_a, admin_user):
     headers = auth_headers(teacher_a)
-    class_ = _create_class(client, teacher_a)
-    class_id = class_["id"]
+    admin_headers = auth_headers(admin_user)
+    class_id = create_test_class(client, admin_user, teacher_a, name="Kelas 8A")
 
     listed = client.get("/classes", headers=headers)
     assert listed.status_code == 200
     assert any(c["id"] == class_id for c in listed.json())
 
-    updated = client.put(f"/classes/{class_id}", json={"name": "Kelas 8B"}, headers=headers)
+    updated = client.put(f"/classes/{class_id}", json={"name": "Kelas 8B"}, headers=admin_headers)
     assert updated.status_code == 200
     assert updated.json()["name"] == "Kelas 8B"
 
-    deleted = client.delete(f"/classes/{class_id}", headers=headers)
+    deleted = client.delete(f"/classes/{class_id}", headers=admin_headers)
     assert deleted.status_code == 204
 
 
-def test_class_ownership(client, teacher_a, teacher_b):
-    class_ = _create_class(client, teacher_a)
-    resp = client.get(f"/classes/{class_['id']}", headers=auth_headers(teacher_b))
+def test_class_ownership(client, teacher_a, teacher_b, admin_user):
+    class_id = create_test_class(client, admin_user, teacher_a)
+    resp = client.get(f"/classes/{class_id}", headers=auth_headers(teacher_b))
     assert resp.status_code == 404
 
-    resp = client.put(f"/classes/{class_['id']}", json={"name": "Hack"}, headers=auth_headers(teacher_b))
-    assert resp.status_code == 404
+    resp = client.put(f"/classes/{class_id}", json={"name": "Hack"}, headers=auth_headers(teacher_b))
+    assert resp.status_code == 403
 
-    resp = client.delete(f"/classes/{class_['id']}", headers=auth_headers(teacher_b))
-    assert resp.status_code == 404
+    resp = client.delete(f"/classes/{class_id}", headers=auth_headers(teacher_b))
+    assert resp.status_code == 403
 
 
 def test_class_not_found(client, teacher_a):
@@ -59,48 +61,55 @@ def test_class_not_found(client, teacher_a):
 
 
 # ---- Students ----
-def test_student_flow(client, teacher_a):
-    class_ = _create_class(client, teacher_a)
-    headers = auth_headers(teacher_a)
+def test_student_flow(client, teacher_a, admin_user):
+    class_id = create_test_class(client, admin_user, teacher_a)
+    admin_headers = auth_headers(admin_user)
+    teacher_headers = auth_headers(teacher_a)
 
-    resp = client.post(f"/classes/{class_['id']}/students", json={"name": "Ani", "student_number": "01"}, headers=headers)
+    resp = client.post(
+        f"/classes/{class_id}/students",
+        json={"name": "Ani", "student_number": "01"},
+        headers=admin_headers,
+    )
     assert resp.status_code == 201
 
     bulk = client.post(
-        f"/classes/{class_['id']}/students/bulk",
+        f"/classes/{class_id}/students/bulk",
         json=[{"name": "Budi", "student_number": "02"}, {"name": "Citra", "student_number": "03"}],
-        headers=headers,
+        headers=admin_headers,
     )
     assert bulk.status_code == 201
     assert len(bulk.json()) == 2
 
-    listed = client.get(f"/classes/{class_['id']}/students", headers=headers)
+    listed = client.get(f"/classes/{class_id}/students", headers=teacher_headers)
     assert listed.status_code == 200
     assert len(listed.json()) == 3
 
     sid = listed.json()[0]["id"]
-    updated = client.put(f"/students/{sid}", json={"name": "Ani Updated", "student_number": "01"}, headers=headers)
+    updated = client.put(
+        f"/students/{sid}",
+        json={"name": "Ani Updated", "student_number": "01"},
+        headers=admin_headers,
+    )
     assert updated.status_code == 200
     assert updated.json()["name"] == "Ani Updated"
 
 
-def test_student_ownership(client, teacher_a, teacher_b):
-    class_ = _create_class(client, teacher_a)
-    resp = client.post(
-        f"/classes/{class_['id']}/students", json={"name": "Ani", "student_number": "01"}, headers=auth_headers(teacher_a)
-    )
-    sid = resp.json()["id"]
+def test_student_ownership(client, teacher_a, teacher_b, admin_user):
+    class_id = create_test_class(client, admin_user, teacher_a)
+    sid = create_test_student(client, admin_user, class_id, name="Ani", number="01")
 
-    resp2 = client.get(f"/students/{sid}", headers=auth_headers(teacher_b))
-    assert resp2.status_code == 405  # endpoint GET tidak ada; teacher B tidak boleh akses kelas A
+    resp2 = client.get(f"/classes/{class_id}/students", headers=auth_headers(teacher_b))
+    assert resp2.status_code == 404
+
     resp3 = client.delete(f"/students/{sid}", headers=auth_headers(teacher_b))
-    assert resp3.status_code == 404
+    assert resp3.status_code == 403
 
 
 # ---- Exams & Questions ----
-def test_exam_question_flow(client, teacher_a):
-    class_ = _create_class(client, teacher_a)
-    exam = _create_exam(client, teacher_a, class_["id"])
+def test_exam_question_flow(client, teacher_a, admin_user):
+    class_id = create_test_class(client, admin_user, teacher_a)
+    exam = _create_exam(client, teacher_a, class_id)
     headers = auth_headers(teacher_a)
 
     for n in (1, 2):
@@ -128,9 +137,9 @@ def test_exam_question_flow(client, teacher_a):
     assert updated.json()["weight"] == 15
 
 
-def test_exam_ownership(client, teacher_a, teacher_b):
-    class_ = _create_class(client, teacher_a)
-    exam = _create_exam(client, teacher_a, class_["id"])
+def test_exam_ownership(client, teacher_a, teacher_b, admin_user):
+    class_id = create_test_class(client, admin_user, teacher_a)
+    exam = _create_exam(client, teacher_a, class_id)
 
     resp = client.get(f"/exams/{exam['id']}", headers=auth_headers(teacher_b))
     assert resp.status_code == 404
@@ -143,17 +152,17 @@ def test_exam_ownership(client, teacher_a, teacher_b):
     assert resp.status_code == 404
 
 
-def test_cross_teacher_exam_creation(client, teacher_a, teacher_b):
-    class_a = _create_class(client, teacher_a)
+def test_cross_teacher_exam_creation(client, teacher_a, teacher_b, admin_user):
+    class_id = create_test_class(client, admin_user, teacher_a)
     resp = client.post(
-        "/exams", json={"class_id": class_a["id"], "title": "Hack", "total_score": 100}, headers=auth_headers(teacher_b)
+        "/exams", json={"class_id": class_id, "title": "Hack", "total_score": 100}, headers=auth_headers(teacher_b)
     )
     assert resp.status_code == 404
 
 
-def test_exam_template_pdf_generation(client, teacher_a):
-    class_ = _create_class(client, teacher_a)
-    exam = _create_exam(client, teacher_a, class_["id"])
+def test_exam_template_pdf_generation(client, teacher_a, admin_user):
+    class_id = create_test_class(client, admin_user, teacher_a)
+    exam = _create_exam(client, teacher_a, class_id)
     headers = auth_headers(teacher_a)
 
     # 400 if no questions
@@ -171,19 +180,14 @@ def test_exam_template_pdf_generation(client, teacher_a):
     assert resp.content.startswith(b"%PDF")
 
 
-def test_class_and_exam_subject_relation(client, teacher_a):
-    headers = auth_headers(teacher_a)
-    # Create class with specific subject
-    resp = client.post("/classes", json={"name": "Kelas 8A", "grade_level": "8", "subject": "Matematika"}, headers=headers)
-    assert resp.status_code == 201
-    class_ = resp.json()
-    assert class_["subject"] == "Matematika"
+def test_class_and_exam_subject_relation(client, teacher_a, admin_user):
+    class_id = create_test_class(client, admin_user, teacher_a, name="Kelas 8A", grade="8", subject="Matematika")
 
     # Create exam in that class with custom title
     exam_resp = client.post(
         "/exams",
-        json={"class_id": class_["id"], "title": "UTS Aljabar", "subject": "Matematika", "total_score": 100},
-        headers=headers,
+        json={"class_id": class_id, "title": "UTS Aljabar", "total_score": 100},
+        headers=auth_headers(teacher_a),
     )
     assert exam_resp.status_code == 201
     exam = exam_resp.json()
@@ -191,10 +195,10 @@ def test_class_and_exam_subject_relation(client, teacher_a):
     assert "Matematika — Kelas 8A" in exam["class_name"]
 
 
-def test_auto_calculated_exam_score(client, teacher_a):
+def test_auto_calculated_exam_score(client, teacher_a, admin_user):
     headers = auth_headers(teacher_a)
-    class_ = _create_class(client, teacher_a)
-    exam = _create_exam(client, teacher_a, class_["id"])
+    class_id = create_test_class(client, admin_user, teacher_a)
+    exam = _create_exam(client, teacher_a, class_id)
     exam_id = exam["id"]
 
     # 1. Add MCQ (weight 5)
@@ -217,6 +221,3 @@ def test_auto_calculated_exam_score(client, teacher_a):
     assert del_resp.status_code == 204
     e4 = client.get(f"/exams/{exam_id}", headers=headers).json()
     assert e4["total_score"] == 15
-
-
-

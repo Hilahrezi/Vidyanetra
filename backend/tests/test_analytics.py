@@ -1,5 +1,3 @@
-import base64
-
 from tests.conftest import auth_headers
 from tests.test_submissions import _setup_exam, _upload
 
@@ -13,8 +11,8 @@ def _grade_all(client, token, exam_id, student_id, n_submissions=3):
     return ids
 
 
-def test_distribution_and_difficulty(client, teacher_a):
-    exam_id, student_id, _ = _setup_exam(client, teacher_a)
+def test_distribution_and_difficulty(client, teacher_a, admin_user):
+    exam_id, student_id, _ = _setup_exam(client, admin_user, teacher_a)
     _grade_all(client, teacher_a, exam_id, student_id, n_submissions=3)
 
     dist = client.get(f"/analytics/exams/{exam_id}/distribution", headers=auth_headers(teacher_a))
@@ -31,14 +29,14 @@ def test_distribution_and_difficulty(client, teacher_a):
     assert all(q["average_score"] is not None for q in questions)
 
 
-def test_analytics_ownership(client, teacher_a, teacher_b):
-    exam_id, student_id, _ = _setup_exam(client, teacher_a)
+def test_analytics_ownership(client, teacher_a, teacher_b, admin_user):
+    exam_id, student_id, _ = _setup_exam(client, admin_user, teacher_a)
     resp = client.get(f"/analytics/exams/{exam_id}/distribution", headers=auth_headers(teacher_b))
     assert resp.status_code == 404
 
 
-def test_export_csv(client, teacher_a):
-    exam_id, student_id, _ = _setup_exam(client, teacher_a)
+def test_export_csv(client, teacher_a, admin_user):
+    exam_id, student_id, _ = _setup_exam(client, admin_user, teacher_a)
     _grade_all(client, teacher_a, exam_id, student_id, n_submissions=1)
 
     resp = client.get(f"/exams/{exam_id}/export.csv", headers=auth_headers(teacher_a))
@@ -52,15 +50,13 @@ def test_export_csv(client, teacher_a):
     assert lines[1].startswith("01,Ani,")
 
 
-def test_dashboard_overview(client, teacher_a):
-    exam_id, student_id, _ = _setup_exam(client, teacher_a)
+def test_dashboard_overview(client, teacher_a, admin_user):
+    exam_id, student_id, _ = _setup_exam(client, admin_user, teacher_a)
     _grade_all(client, teacher_a, exam_id, student_id, n_submissions=2)
 
     resp = client.get("/analytics/overview", headers=auth_headers(teacher_a))
     assert resp.status_code == 200
-    data = resp.json()
-    assert data["total_exams"] >= 1
-    assert data["total_classes"] >= 1
-    assert data["total_students"] >= 1
-    assert "overall_pass_rate" in data
-
+    body = resp.json()
+    assert body["total_exams"] >= 1
+    assert body["total_classes"] >= 1
+    assert body["recent_submissions_count"] >= 2

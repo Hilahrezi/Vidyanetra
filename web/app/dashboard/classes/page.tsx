@@ -65,9 +65,8 @@ export default function ClassesPage() {
   function openCreateModal() {
     setEditingClass(null);
     setFormName('');
-    setFormGrade('8');
     setFormSubject('Matematika');
-    setFormTeacherId(currentUser?.id);
+    setFormTeacherId(teachers[0]?.id ?? currentUser?.id);
     setFormError(null);
     setIsModalOpen(true);
   }
@@ -75,7 +74,6 @@ export default function ClassesPage() {
   function openEditModal(c: Class) {
     setEditingClass(c);
     setFormName(c.name);
-    setFormGrade(c.grade_level);
     setFormSubject(c.subject);
     setFormTeacherId(c.teacher_id);
     setFormError(null);
@@ -89,18 +87,13 @@ export default function ClassesPage() {
 
     const payload: {
       name: string;
-      grade_level: string;
       subject: string;
       teacher_id?: number;
     } = {
       name: formName.trim(),
-      grade_level: formGrade.trim(),
       subject: formSubject.trim(),
+      teacher_id: formTeacherId,
     };
-
-    if (currentUser?.role === 'admin' && formTeacherId) {
-      payload.teacher_id = formTeacherId;
-    }
 
     try {
       const url = editingClass ? `/api/classes/${editingClass.id}` : '/api/classes';
@@ -242,53 +235,53 @@ export default function ClassesPage() {
 
         {/* 4 KPI Summary Cards */}
         <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-sky-100 bg-sky-50/50 p-5 shadow-sm">
-            <span className="text-xs font-semibold text-sky-700 uppercase">Total Rombel / Kelas</span>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-sky-950">
-              {metrics.totalClasses} <span className="text-sm font-normal text-sky-600">Kelas</span>
+          <div className="rounded-2xl border border-[#CCFBF1] bg-gradient-to-br from-[#E6F4F1]/80 to-white p-5 shadow-sm">
+            <span className="text-xs font-bold text-[#0F766E] uppercase">Total Rombel / Kelas</span>
+            <p className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A]">
+              {metrics.totalClasses} <span className="text-sm font-normal text-slate-400">Kelas</span>
             </p>
-            <p className="mt-1 text-xs text-sky-700/80">Terdaftar di sistem</p>
+            <p className="mt-1 text-xs text-[#0F766E]/80 font-medium">Terdaftar di sistem</p>
           </div>
 
-          <div className="rounded-2xl border border-purple-100 bg-purple-50/50 p-5 shadow-sm">
-            <span className="text-xs font-semibold text-purple-700 uppercase">Total Siswa Terdata</span>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-purple-950">
-              {metrics.totalStudents} <span className="text-sm font-normal text-purple-600">Siswa</span>
+          <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50/50 to-white p-5 shadow-sm">
+            <span className="text-xs font-bold text-teal-800 uppercase">Total Siswa Terdata</span>
+            <p className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A]">
+              {metrics.totalStudents} <span className="text-sm font-normal text-slate-400">Siswa</span>
             </p>
-            <p className="mt-1 text-xs text-purple-700/80">Tersebar di seluruh rombel</p>
+            <p className="mt-1 text-xs text-teal-700/80 font-medium">Tersebar di seluruh rombel</p>
           </div>
 
-          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 shadow-sm">
-            <span className="text-xs font-semibold text-indigo-700 uppercase">Guru Pengampu</span>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-indigo-950">
-              {metrics.totalTeachers} <span className="text-sm font-normal text-indigo-600">Guru</span>
+          <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/60 to-white p-5 shadow-sm">
+            <span className="text-xs font-bold text-emerald-800 uppercase">Guru Pengampu</span>
+            <p className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A]">
+              {metrics.totalTeachers} <span className="text-sm font-normal text-slate-400">Guru</span>
             </p>
-            <p className="mt-1 text-xs text-indigo-700/80">Memiliki kelas aktif</p>
+            <p className="mt-1 text-xs text-emerald-700/80 font-medium">Memiliki penugasan aktif</p>
           </div>
 
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 shadow-sm">
-            <span className="text-xs font-semibold text-emerald-700 uppercase">Mata Pelajaran</span>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-emerald-950">
-              {metrics.totalSubjects} <span className="text-sm font-normal text-emerald-600">Mapel</span>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <span className="text-xs font-bold text-slate-500 uppercase">Mata Pelajaran</span>
+            <p className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A]">
+              {metrics.totalSubjects} <span className="text-sm font-normal text-slate-400">Mapel</span>
             </p>
-            <p className="mt-1 text-xs text-emerald-700/80">Kurikulum terdaftar</p>
+            <p className="mt-1 text-xs text-slate-400 font-medium">Kurikulum terdaftar</p>
           </div>
         </section>
 
         {/* Action Bar & Search */}
-        <section className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
           <div className="flex flex-1 flex-wrap items-center gap-2">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari nama kelas, mapel, atau guru..."
-              className="w-full max-w-sm rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm placeholder:text-slate-400 focus:bg-white focus:outline-none"
+              className="w-full max-w-sm rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2 text-sm placeholder:text-slate-400 focus:border-[#0F766E] focus:bg-white focus:outline-none"
             />
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-700 focus:bg-white focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-[#0F766E] focus:bg-white focus:outline-none"
             >
               <option value="all">Semua Mata Pelajaran</option>
               {availableSubjects.map((s) => (
@@ -301,7 +294,7 @@ export default function ClassesPage() {
             <select
               value={selectedGrade}
               onChange={(e) => setSelectedGrade(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-700 focus:bg-white focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-[#0F766E] focus:bg-white focus:outline-none"
             >
               <option value="all">Semua Tingkat</option>
               {availableGrades.map((g) => (
@@ -314,7 +307,7 @@ export default function ClassesPage() {
 
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-teal-900/10 active:scale-[0.99] transition"
           >
             <span>+</span>
             <span>Tambah Kelas Baru</span>
@@ -324,10 +317,10 @@ export default function ClassesPage() {
         {/* Classes Grid */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-900">
+            <h2 className="text-base font-extrabold text-[#0F172A]">
               Daftar Rombongan Belajar ({filteredClasses.length})
             </h2>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-500 font-medium">
               Menampilkan {filteredClasses.length} dari {classes?.length ?? 0} kelas
             </span>
           </div>
@@ -455,6 +448,20 @@ export default function ClassesPage() {
             <form onSubmit={handleSaveClass} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nama Rombel / Kelas
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="mis. 8A, 8B, 10C, 12B"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Mata Pelajaran
                 </label>
                 <input
@@ -462,57 +469,27 @@ export default function ClassesPage() {
                   required
                   value={formSubject}
                   onChange={(e) => setFormSubject(e.target.value)}
-                  placeholder="mis. Matematika, IPA, Bahasa Indonesia"
+                  placeholder="mis. Fisika, Matematika, Bahasa Indonesia"
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:border-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Nama Kelas / Rombel
+                  Guru Pengampu (Penugasan)
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="mis. 8A, 8B, 9A"
+                <select
+                  value={formTeacherId}
+                  onChange={(e) => setFormTeacherId(Number(e.target.value))}
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-                />
+                >
+                  {teachers.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.email})
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Tingkat / Grade Level
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formGrade}
-                  onChange={(e) => setFormGrade(e.target.value)}
-                  placeholder="mis. 7, 8, 9, 10"
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-                />
-              </div>
-
-              {currentUser?.role === 'admin' && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Guru Pengampu
-                  </label>
-                  <select
-                    value={formTeacherId}
-                    onChange={(e) => setFormTeacherId(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-                  >
-                    {teachers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button

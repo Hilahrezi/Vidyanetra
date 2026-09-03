@@ -1,11 +1,20 @@
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
-from ..auth import require_teacher
+from ..auth import require_admin, require_teacher
 from ..database import get_db
 
 router = APIRouter(prefix="/classes", tags=["classes"])
+
+
+def _derive_grade(name: str, grade_level: str | None) -> str:
+    if grade_level and grade_level.strip():
+        return grade_level.strip()
+    match = re.search(r"\d+", name)
+    return match.group(0) if match else name
 
 
 def _enrich_class(class_: models.Class, db: Session) -> schemas.ClassOut:
@@ -43,26 +52,33 @@ def list_classes(user: models.User = Depends(require_teacher), db: Session = Dep
     if user.role == "admin":
         classes = db.query(models.Class).order_by(models.Class.id).all()
     else:
-        classes = db.query(models.Class).filter(models.Class.teacher_id == user.id).order_by(models.Class.id).all()
+        classes = (
+            db.query(models.Class)
+            .filter(models.Class.teacher_id == user.id)
+            .order_by(models.Class.id)
+            .all()
+        )
     return [_enrich_class(c, db) for c in classes]
 
 
 @router.post("", response_model=schemas.ClassOut, status_code=status.HTTP_201_CREATED)
 def create_class(
     payload: schemas.ClassCreate,
-    user: models.User = Depends(require_teacher),
+    admin: models.User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    target_teacher_id = user.id
-    if user.role == "admin" and payload.teacher_id:
-        # Check teacher exists
-        teacher = db.get(models.User, payload.teacher_id)
-        if not teacher:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Guru tidak ditemukan")
-        target_teacher_id = payload.teacher_id
+    target_teacher_id = payload.teacher_id or admin.id
+    teacher = db.get(models.User, target_teacher_id)
+    if not teacher:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Guru pengampu tidak ditemukan")
 
-    data = payload.model_dump(exclude={"teacher_id"})
-    class_ = models.Class(teacher_id=target_teacher_id, **data)
+    data = payload.model_dump(exclude={"teacher_id", "grade_level"})
+    grade_level = _derive_grade(payload.name, payload.grade_level)
+    class_ = models.Class(
+        teacher_id=target_teacher_id,
+        grade_level=grade_level,
+        **data,
+    )
     db.add(class_)
     db.commit()
     db.refresh(class_)
@@ -83,19 +99,23 @@ def get_class(
 def update_class(
     class_id: int,
     payload: schemas.ClassUpdate,
-    user: models.User = Depends(require_teacher),
+    admin: models.User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    class_ = _owned_class(class_id, user, db)
+    class_ = db.get(models.Class, class_id)
+    if class_ is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kelas tidak ditemukan")
+
     data = payload.model_dump(exclude_unset=True)
-    if "teacher_id" in data and user.role == "admin" and data["teacher_id"]:
+    if "teacher_id" in data and data["teacher_id"]:
         teacher = db.get(models.User, data["teacher_id"])
         if not teacher:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Guru tidak ditemukan")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Guru pengampu tidak ditemukan")
         class_.teacher_id = data["teacher_id"]
         del data["teacher_id"]
-    elif "teacher_id" in data:
-        del data["teacher_id"]
+
+    if "name" in data and "grade_level" not in data:
+        class_.grade_level = _derive_grade(data["name"], getattr(class_, "grade_level", None))
 
     for field, value in data.items():
         setattr(class_, field, value)
@@ -107,9 +127,11 @@ def update_class(
 @router.delete("/{class_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_class(
     class_id: int,
-    user: models.User = Depends(require_teacher),
+    admin: models.User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    class_ = _owned_class(class_id, user, db)
+    class_ = db.get(models.Class, class_id)
+    if class_ is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kelas tidak ditemukan")
     db.delete(class_)
     db.commit()

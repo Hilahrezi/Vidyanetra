@@ -1,12 +1,10 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('guru@sekolah.id');
-  const [password, setPassword] = useState('rahasia123');
+  const [email, setEmail] = useState('admin@sekolah.id');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -27,49 +25,96 @@ export default function LoginPage() {
       }
       window.location.href = '/dashboard';
     } catch (err: unknown) {
-      setError('Tidak dapat terhubung ke server. Pastikan backend aktif.');
+      setError('Tidak dapat terhubung ke server backend. Pastikan server sedang berjalan.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-      <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg border border-slate-200">
-        <h1 className="mb-1 text-center text-2xl font-bold text-slate-800">AutoGrading</h1>
-        <p className="mb-6 text-center text-sm text-slate-500">Dashboard Guru</p>
-
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-200 text-sm text-red-700 flex items-start gap-2">
-            <span className="font-bold">⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          required
-        />
-        <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-6 w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          required
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-indigo-600 py-2.5 font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition shadow"
+    <main className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-4 text-[#0F172A]">
+      <div className="w-full max-w-sm space-y-4">
+        <form
+          onSubmit={submit}
+          className="rounded-3xl bg-white p-8 shadow-xl shadow-slate-200/50 border border-slate-200/80"
         >
-          {loading ? 'Memproses...' : 'Masuk'}
-        </button>
-      </form>
+          {/* Vidyanetra Brand Icon */}
+          <div className="flex justify-center mb-3">
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#0F766E] to-[#14B8A6] text-white shadow-lg shadow-teal-900/20">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+              <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-[#10B981] border-2 border-white animate-pulse" />
+            </div>
+          </div>
+
+          <h1 className="text-center text-xl font-bold tracking-tight text-[#0F172A]">
+            Vidyanetra <span className="text-[#0F766E]">Admin</span>
+          </h1>
+          <p className="mb-6 text-center text-xs text-slate-500 font-medium">
+            Intelligent Academic Vision & Assessment Portal
+          </p>
+
+          {error && (
+            <div className="mb-4 rounded-xl bg-rose-50 p-3.5 border border-rose-200 text-xs text-rose-700 leading-relaxed flex items-start gap-2.5">
+              <span className="text-sm leading-none mt-0.5">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="space-y-3.5">
+            <div>
+              <label className="mb-1 block text-xs font-bold text-slate-700">Email Administrator</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@sekolah.id"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm focus:border-[#0F766E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 transition"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold text-slate-700">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm focus:border-[#0F766E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E]/20 transition"
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-6 w-full rounded-xl bg-[#0F766E] hover:bg-[#115E59] py-2.5 text-sm font-bold text-white shadow-md shadow-teal-900/20 active:scale-[0.99] disabled:opacity-50 transition"
+          >
+            {loading ? 'Memproses Autentikasi...' : 'Masuk ke Portal'}
+          </button>
+        </form>
+
+        <div className="rounded-2xl border border-[#CCFBF1] bg-[#E6F4F1] p-4 text-center text-xs text-[#0F766E] shadow-sm">
+          <p className="font-bold mb-1">👨‍🏫 Khusus Bapak / Ibu Guru Pengampu</p>
+          <p className="text-slate-600 leading-relaxed">
+            Pengelolaan soal, pemindaian lembar jawaban (*scanner*), dan koreksi asesmen dilakukan melalui{' '}
+            <strong className="text-[#0F766E]">Aplikasi Mobile Android Vidyanetra</strong>.
+          </p>
+        </div>
+      </div>
     </main>
   );
 }

@@ -114,6 +114,18 @@ class ApiClient {
   Future<void> deleteExam(int examId) =>
       _guard<void>(() => _dio.delete('/exams/$examId'));
 
+  Future<Map<String, dynamic>> updateExam(
+    int examId,
+    String title, {
+    String? subject,
+    int totalScore = 100,
+  }) =>
+      _guard<Map<String, dynamic>>(() => _dio.put('/exams/$examId', data: {
+            'title': title,
+            if (subject != null) 'subject': subject,
+            'total_score': totalScore,
+          }));
+
   Future<List<dynamic>> getQuestions(int examId) =>
       _guard<List<dynamic>>(() => _dio.get('/exams/$examId/questions'));
 
@@ -125,6 +137,20 @@ class ApiClient {
     double weight,
   ) =>
       _guard<Map<String, dynamic>>(() => _dio.post('/exams/$examId/questions', data: {
+            'question_number': questionNumber,
+            'type': type,
+            'answer_key': answerKey,
+            'weight': weight,
+          }));
+
+  Future<Map<String, dynamic>> updateQuestion(
+    int questionId,
+    int questionNumber,
+    String type,
+    String answerKey,
+    double weight,
+  ) =>
+      _guard<Map<String, dynamic>>(() => _dio.put('/questions/$questionId', data: {
             'question_number': questionNumber,
             'type': type,
             'answer_key': answerKey,

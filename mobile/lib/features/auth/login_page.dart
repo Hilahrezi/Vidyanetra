@@ -29,9 +29,9 @@ class _LoginPageState extends State<LoginPage> {
         builder: (dialogCtx, setDialogState) => AlertDialog(
           title: const Row(
             children: [
-              Icon(Icons.dns, color: Colors.indigo),
+              Icon(Icons.dns, color: Color(0xFF0F766E)),
               SizedBox(width: 8),
-              Text('Pengaturan Server'),
+              Text('Pengaturan Server Vidyanetra', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ],
           ),
           content: SingleChildScrollView(
@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const Text(
                   'Masukkan alamat base URL backend FastAPI:',
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -66,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
                           setDialogState(() {
                             testing = true;
                             testStatus = 'Menghubungi server...';
-                            testColor = Colors.blue;
+                            testColor = Colors.teal[800];
                           });
                           final rawUrl = controller.text.trim().replaceAll(RegExp(r'/+$'), '');
                           try {
@@ -78,8 +78,8 @@ class _LoginPageState extends State<LoginPage> {
                             if (resp.statusCode == 200) {
                               setDialogState(() {
                                 testing = false;
-                                testStatus = '✅ Terhubung! Server aktif.';
-                                testColor = Colors.green[700];
+                                testStatus = '✅ Terhubung! Server Vidyanetra aktif.';
+                                testColor = Colors.green[800];
                               });
                             } else {
                               setDialogState(() {
@@ -91,7 +91,7 @@ class _LoginPageState extends State<LoginPage> {
                           } catch (e) {
                             setDialogState(() {
                               testing = false;
-                              testStatus = '❌ Tidak dapat terhubung. Cek Tailscale & Firewall.';
+                              testStatus = '❌ Tidak dapat terhubung. Cek koneksi server.';
                               testColor = Colors.red[700];
                             });
                           }
@@ -101,12 +101,12 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 6),
                   Text(
                     testStatus!,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: testColor),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: testColor),
                     textAlign: TextAlign.center,
                   ),
                 ],
                 const SizedBox(height: 16),
-                const Text('Preset Cepat:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                const Text('Preset Cepat:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
@@ -194,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(Icons.tune_rounded),
             tooltip: 'Pengaturan Server',
             onPressed: _showServerSettingsDialog,
           ),
@@ -209,45 +209,108 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.assignment_turned_in, size: 64, color: Colors.indigo),
-                const SizedBox(height: 8),
-                Text('AutoGrading', textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium),
+                // Vidyanetra Brand Logo
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0F766E).withOpacity(0.3),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.remove_red_eye_rounded, size: 48, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Vidyanetra',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Intelligent Academic Vision & Assessment',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black54),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   'Server: ${AppConfig.apiBase}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 11, color: Colors.black45),
+                  style: const TextStyle(fontSize: 11, color: Colors.black38, fontFamily: 'monospace'),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
                 TextField(
                   controller: _email,
-                  decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.person)),
+                  decoration: InputDecoration(
+                    labelText: 'Email Guru',
+                    prefixIcon: const Icon(Icons.alternate_email, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
                   keyboardType: TextInputType.emailAddress,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 TextField(
                   controller: _password,
-                  decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock)),
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
                   obscureText: true,
                   onSubmitted: (_) => _submit(),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
-                  Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(_error!, style: TextStyle(color: Colors.red.shade800, fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-                const SizedBox(height: 20),
+                const SizedBox(height: 22),
                 FilledButton(
                   onPressed: _loading ? null : _submit,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
                   child: _loading
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Masuk'),
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Masuk ke Vidyanetra', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 16),
                 Center(
                   child: TextButton.icon(
-                    icon: const Icon(Icons.tune, size: 16),
-                    label: const Text('Ubah Alamat Server', style: TextStyle(fontSize: 12)),
+                    icon: const Icon(Icons.settings_ethernet, size: 16),
+                    label: const Text('Ubah Alamat Server', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     onPressed: _showServerSettingsDialog,
                   ),
                 ),

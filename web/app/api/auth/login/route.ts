@@ -20,6 +20,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validasi peran: Web Dashboard khusus Administrator Sekolah
+    if (data.user?.role !== 'admin') {
+      return NextResponse.json(
+        {
+          detail:
+            'Web Dashboard ini dikhususkan untuk Administrator Sekolah. Bapak/Ibu Guru dipersilakan menggunakan Aplikasi Mobile AutoGrading untuk mengelola ujian dan penilaian.',
+        },
+        { status: 403 }
+      );
+    }
+
     const out = NextResponse.json(data);
     out.cookies.set(TOKEN_COOKIE, data.access_token, {
       httpOnly: true,
@@ -29,7 +40,6 @@ export async function POST(req: NextRequest) {
     });
     return out;
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Server offline';
     return NextResponse.json(
       { detail: `Tidak dapat terhubung ke Backend API (${API_BASE}). Pastikan server backend sedang berjalan.` },
       { status: 502 }

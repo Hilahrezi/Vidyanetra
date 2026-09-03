@@ -21,9 +21,8 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
   bool _downloadingPdf = false;
   String? _error;
 
-  // New exam form controllers
+  // New exam form controller
   final _titleCtrl = TextEditingController(text: 'Ujian Baru');
-  final _subjectCtrl = TextEditingController(text: 'Matematika');
   int? _selectedClassId;
 
   @override
@@ -44,7 +43,6 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
       _classes = classes;
       if (_classes.isNotEmpty && _selectedClassId == null) {
         _selectedClassId = _classes.first['id'] as int;
-        _subjectCtrl.text = _classes.first['subject'] as String? ?? 'Matematika';
       }
 
       if (_currentExamId != null) {
@@ -66,16 +64,22 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
   Future<void> _createExam() async {
     if (_titleCtrl.text.trim().isEmpty || _selectedClassId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Isi judul ujian dan pilih kelas')),
+        const SnackBar(content: Text('Isi judul ujian dan pilih penugasan kelas')),
       );
       return;
     }
+
+    final selectedClass = _classes.firstWhere(
+      (c) => c['id'] == _selectedClassId,
+      orElse: () => null,
+    );
+    final subject = selectedClass?['subject'] as String? ?? 'Umum';
 
     try {
       final res = await ApiClient.instance.createExam(
         _selectedClassId!,
         _titleCtrl.text.trim(),
-        subject: _subjectCtrl.text.trim().isEmpty ? 'Umum' : _subjectCtrl.text.trim(),
+        subject: subject,
         totalScore: 0,
       );
       _currentExamId = res['id'] as int;
@@ -102,25 +106,27 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
   Future<void> _showAddQuestionDialog() async {
     if (_currentExamId == null) return;
 
-    final nextNumber = _questions.isEmpty ? 1 : (_questions.map((q) => q['question_number'] as int).reduce((a, b) => a > b ? a : b) + 1);
+    final nextNumber = _questions.length + 1;
     String selectedType = 'mcq';
-    String mcqSelectedChoice = 'A';
-    final answerKeyCtrl = TextEditingController(text: 'A');
     final weightCtrl = TextEditingController(text: '5');
+    String selectedMcqKey = 'A';
+    final answerKeyCtrl = TextEditingController();
 
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
+        builder: (context, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -130,94 +136,65 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Tambah Soal #$nextNumber',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
+                    Text('Tambah Butir Soal #$nextNumber',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
                   ],
+                ),
+                const SizedBox(height: 16),
+
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipe Soal',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'mcq', child: Text('Pilihan Ganda (MCQ A-D)')),
+                    DropdownMenuItem(value: 'short', child: Text('Isian Singkat (Kata / Angka)')),
+                    DropdownMenuItem(value: 'essay', child: Text('Esai / Uraian')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) {
+                      setModalState(() {
+                        selectedType = v;
+                        if (v == 'mcq') {
+                          weightCtrl.text = '5';
+                        } else if (v == 'short') {
+                          weightCtrl.text = '10';
+                        } else if (v == 'essay') {
+                          weightCtrl.text = '20';
+                        }
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(height: 12),
 
-                // Type Selector
-                const Text('Tipe Soal:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                const SizedBox(height: 6),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'mcq', label: Text('Pilgan (5pt)')),
-                    ButtonSegment(value: 'short', label: Text('Isian (10pt)')),
-                    ButtonSegment(value: 'essay', label: Text('Esai (20pt)')),
-                  ],
-                  selected: {selectedType},
-                  onSelectionChanged: (set) {
-                    setModalState(() {
-                      selectedType = set.first;
-                      if (selectedType == 'mcq') {
-                        weightCtrl.text = '5';
-                        answerKeyCtrl.text = mcqSelectedChoice;
-                      } else if (selectedType == 'short') {
-                        weightCtrl.text = '10';
-                        if (['A', 'B', 'C', 'D'].contains(answerKeyCtrl.text)) {
-                          answerKeyCtrl.clear();
-                        }
-                      } else if (selectedType == 'essay') {
-                        weightCtrl.text = '20';
-                        if (['A', 'B', 'C', 'D'].contains(answerKeyCtrl.text)) {
-                          answerKeyCtrl.clear();
-                        }
-                      }
-                    });
-                  },
+                TextField(
+                  controller: weightCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Bobot Nilai (Poin)',
+                    hintText: 'mis. 5, 10, 20',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-                // Weight input
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: weightCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Bobot Nilai',
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Answer key inputs
                 if (selectedType == 'mcq') ...[
-                  const Text('Pilih Opsi Kunci Jawaban Benar:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                  const Text('Kunci Jawaban Pilihan Ganda:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: ['A', 'B', 'C', 'D'].map((opt) {
-                      final isSelected = mcqSelectedChoice == opt;
+                      final isSelected = selectedMcqKey == opt;
                       return ChoiceChip(
-                        label: Text(
-                          opt,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : Colors.black87,
-                          ),
-                        ),
+                        label: Text(opt, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black87)),
                         selected: isSelected,
                         selectedColor: Colors.indigo,
-                        onSelected: (val) {
-                          if (val) {
-                            setModalState(() {
-                              mcqSelectedChoice = opt;
-                              answerKeyCtrl.text = opt;
-                            });
-                          }
+                        onSelected: (sel) {
+                          if (sel) setModalState(() => selectedMcqKey = opt);
                         },
                       );
                     }).toList(),
@@ -226,27 +203,9 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                   TextField(
                     controller: answerKeyCtrl,
                     decoration: const InputDecoration(
-                      labelText: 'Kunci Jawaban Isian Singkat',
-                      hintText: 'mis. Ibukota Indonesia | Jakarta',
+                      labelText: 'Kunci Jawaban Singkat',
+                      hintText: 'mis. fotosintesis | reaksi fotosintesis (pisahkan opsi dengan |)',
                       border: OutlineInputBorder(),
-                      helperText: 'Gunakan "|" untuk alternatif jawaban benar',
-                      helperMaxLines: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ActionChip(
-                      avatar: const Icon(Icons.add, size: 16),
-                      label: const Text('Tambah Alternatif (|)', style: TextStyle(fontSize: 11)),
-                      onPressed: () {
-                        setModalState(() {
-                          final cur = answerKeyCtrl.text.trim();
-                          if (cur.isNotEmpty && !cur.endsWith('|')) {
-                            answerKeyCtrl.text = '$cur | ';
-                          }
-                        });
-                      },
                     ),
                   ),
                 ] else ...[
@@ -264,7 +223,7 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
 
                 FilledButton(
                   onPressed: () async {
-                    final key = answerKeyCtrl.text.trim();
+                    final key = selectedType == 'mcq' ? selectedMcqKey : answerKeyCtrl.text.trim();
                     if (key.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Kunci jawaban wajib diisi!')),
@@ -290,6 +249,153 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                     }
                   },
                   child: const Text('Simpan Soal'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditQuestionDialog(dynamic q) async {
+    final qId = q['id'] as int;
+    final qNumber = q['question_number'] as int;
+    String selectedType = (q['type'] ?? 'mcq').toString();
+    final weightCtrl = TextEditingController(text: '${q['weight']}');
+    String selectedMcqKey = selectedType == 'mcq' ? (q['answer_key'] ?? 'A').toString().toUpperCase() : 'A';
+    final answerKeyCtrl = TextEditingController(text: selectedType != 'mcq' ? (q['answer_key'] ?? '') : '');
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Edit Butir Soal #$qNumber',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipe Soal',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'mcq', child: Text('Pilihan Ganda (MCQ A-D)')),
+                    DropdownMenuItem(value: 'short', child: Text('Isian Singkat (Kata / Angka)')),
+                    DropdownMenuItem(value: 'essay', child: Text('Esai / Uraian')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) {
+                      setModalState(() {
+                        selectedType = v;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: weightCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Bobot Nilai (Poin)',
+                    hintText: 'mis. 5, 10, 20',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+
+                if (selectedType == 'mcq') ...[
+                  const Text('Kunci Jawaban Pilihan Ganda:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: ['A', 'B', 'C', 'D'].map((opt) {
+                      final isSelected = selectedMcqKey == opt;
+                      return ChoiceChip(
+                        label: Text(opt, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : Colors.black87)),
+                        selected: isSelected,
+                        selectedColor: Colors.indigo,
+                        onSelected: (sel) {
+                          if (sel) setModalState(() => selectedMcqKey = opt);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ] else if (selectedType == 'short') ...[
+                  TextField(
+                    controller: answerKeyCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Kunci Jawaban Singkat',
+                      hintText: 'mis. fotosintesis | reaksi fotosintesis (pisahkan opsi dengan |)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ] else ...[
+                  TextField(
+                    controller: answerKeyCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Kunci Jawaban Esai (Gagasan Utama / Rubrik)',
+                      hintText: 'Tuliskan poin-poin atau konsep kunci yang dinilai oleh AI semantik...',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+                const SizedBox(height: 20),
+
+                FilledButton(
+                  onPressed: () async {
+                    final key = selectedType == 'mcq' ? selectedMcqKey : answerKeyCtrl.text.trim();
+                    if (key.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Kunci jawaban wajib diisi!')),
+                      );
+                      return;
+                    }
+                    final weight = double.tryParse(weightCtrl.text) ?? 10.0;
+
+                    try {
+                      await ApiClient.instance.updateQuestion(
+                        qId,
+                        qNumber,
+                        selectedType,
+                        key,
+                        weight,
+                      );
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      await _loadQuestions();
+                    } on ApiException catch (e) {
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(e.message)));
+                      }
+                    }
+                  },
+                  child: const Text('Simpan Perubahan'),
                 ),
               ],
             ),
@@ -347,84 +453,31 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
         } else {
           dir = await getExternalStorageDirectory();
         }
+      } else {
+        dir = await getApplicationDocumentsDirectory();
       }
-      dir ??= await getApplicationDocumentsDirectory();
 
-      final sanitizedTitle = (_exam?['title'] ?? 'ujian').toString().replaceAll(RegExp(r'[^\w\s-]'), '_');
-      final fileName = 'lembar_jawaban_${_currentExamId}_$sanitizedTitle.pdf';
-      final file = File('${dir.path}/$fileName');
-      await file.writeAsBytes(bytes);
+      if (dir != null) {
+        final filePath = '${dir.path}/lembar_jawaban_exam_${_currentExamId}.pdf';
+        final file = File(filePath);
+        await file.writeAsBytes(bytes);
 
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('PDF Lembar Jawaban disimpan di:\n$filePath'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } catch (e) {
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.picture_as_pdf, color: Colors.redAccent),
-                SizedBox(width: 8),
-                Text('PDF Lembar Jawaban'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Lembar jawaban A4 (berisi 4 fiducial marker & kotak jawaban) berhasil dibuat dan disimpan di HP:',
-                  style: TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.folder_open, size: 16, color: Colors.indigo),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              fileName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      SelectableText(
-                        file.path,
-                        style: const TextStyle(fontSize: 11, color: Colors.black87),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  '💡 Anda dapat mencetak file ini di kertas A4 untuk dibagikan kepada siswa.',
-                  style: TextStyle(fontSize: 11, color: Colors.black54),
-                ),
-              ],
-            ),
-            actions: [
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Tutup'),
-              ),
-            ],
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal men-download PDF: $e'), backgroundColor: Colors.red),
         );
       }
-    } on ApiException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal membuat PDF: $e')));
     } finally {
       if (mounted) setState(() => _downloadingPdf = false);
     }
@@ -432,51 +485,15 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: Text(_currentExamId == null ? 'Buat Ujian Baru' : 'Kelola Soal Ujian'),
-        actions: [
-          if (_currentExamId != null) ...[
-            IconButton(
-              icon: _downloadingPdf
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.picture_as_pdf, color: Colors.indigo),
-              tooltip: 'Download PDF Lembar Jawaban',
-              onPressed: _downloadingPdf ? null : _downloadPdf,
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-              tooltip: 'Hapus Ujian',
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Hapus Ujian?'),
-                    content: const Text('Semua soal dan submission dalam ujian ini akan dihapus.'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-                      FilledButton(
-                        style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Hapus'),
-                      ),
-                    ],
-                  ),
-                );
+    final selectedClass = _classes.firstWhere(
+      (c) => c['id'] == _selectedClassId,
+      orElse: () => null,
+    );
+    final currentSubject = selectedClass?['subject'] as String? ?? 'Umum';
 
-                if (confirm == true && mounted) {
-                  try {
-                    await ApiClient.instance.deleteExam(_currentExamId!);
-                    if (mounted) Navigator.pop(context, true);
-                  } catch (e) {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
-                  }
-                }
-              },
-            ),
-          ],
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_currentExamId == null ? 'Buat Ujian Baru' : (_exam?['title'] ?? 'Edit Soal Ujian')),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -487,8 +504,8 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Header Ujian Info / Form
                       if (_currentExamId == null) ...[
+                        // Form Create Exam
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -499,62 +516,69 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Text('1. Informasi Ujian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              const Text('1. Informasi Ujian & Penugasan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                               const SizedBox(height: 12),
                               if (_classes.isEmpty)
-                                const Text('Belum ada kelas. Tambahkan kelas terlebih dahulu!')
-                              else
+                                const Text('Belum ada penugasan kelas dari Administrator.')
+                              else ...[
                                 DropdownButtonFormField<int>(
                                   value: _selectedClassId,
                                   decoration: const InputDecoration(
-                                    labelText: 'Kelas Tujuan',
+                                    labelText: 'Pilih Penugasan Kelas',
                                     border: OutlineInputBorder(),
                                     isDense: true,
                                   ),
                                   items: _classes.map((c) {
-                                    final subj = c['subject'] ?? 'Mapel';
+                                    final subj = c['subject'] ?? 'Umum';
                                     final cName = c['name'] ?? 'Kelas';
-                                    final label = cName.toString().startsWith(subj) ? cName : '$subj — $cName';
                                     return DropdownMenuItem<int>(
                                       value: c['id'] as int,
-                                      child: Text('$label (Tingkat ${c['grade_level']})'),
+                                      child: Text('$cName — $subj'),
                                     );
                                   }).toList(),
                                   onChanged: (v) {
                                     setState(() {
                                       _selectedClassId = v;
-                                      final c = _classes.firstWhere((item) => item['id'] == v, orElse: () => null);
-                                      if (c != null && c['subject'] != null) {
-                                        _subjectCtrl.text = c['subject'];
-                                      }
                                     });
                                   },
                                 ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: _subjectCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Mata Pelajaran',
-                                  hintText: 'mis. Matematika, IPA, Bahasa Indonesia',
-                                  border: OutlineInputBorder(),
-                                  isDense: true,
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE6F4F1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFCCFBF1)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.info_outline, size: 16, color: Color(0xFF0F766E)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Mata Pelajaran: $currentSubject (Sesuai penugasan Admin)',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: _titleCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Judul Ujian',
-                                  hintText: 'mis. UTS Matematika Genap',
-                                  border: OutlineInputBorder(),
-                                  isDense: true,
+                                const SizedBox(height: 14),
+                                TextField(
+                                  controller: _titleCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Judul Ujian',
+                                    hintText: 'mis. Ulangan Harian Dinamika Gerak',
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              FilledButton(
-                                onPressed: _createExam,
-                                child: const Text('Buat & Lanjut Tambah Soal'),
-                              ),
+                                const SizedBox(height: 16),
+                                FilledButton(
+                                  onPressed: _createExam,
+                                  child: const Text('Buat & Lanjut Tambah Soal'),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -564,7 +588,7 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: const Color(0xFFE2E8F0)),
                           ),
                           child: Column(
@@ -574,11 +598,11 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.indigo.withOpacity(0.1),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFE6F4F1),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.assignment, color: Colors.indigo),
+                                    child: const Icon(Icons.assignment, color: Color(0xFF0F766E)),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -591,7 +615,7 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                         ),
                                         Text(
                                           'Total Skor: ${_questions.fold<double>(0, (sum, q) => sum + ((q['weight'] as num?) ?? 0)).toInt()} pt (Akumulasi ${_questions.length} Butir Soal)',
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.indigo),
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF0F766E)),
                                         ),
                                       ],
                                     ),
@@ -602,8 +626,8 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                 const SizedBox(height: 14),
                                 FilledButton.tonalIcon(
                                   style: FilledButton.styleFrom(
-                                    backgroundColor: const Color(0xFFEEF2FF),
-                                    foregroundColor: Colors.indigo,
+                                    backgroundColor: const Color(0xFFE6F4F1),
+                                    foregroundColor: const Color(0xFF0F766E),
                                   ),
                                   icon: _downloadingPdf
                                       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
@@ -730,7 +754,13 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                       ),
                                     ),
                                     IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.indigo),
+                                      tooltip: 'Edit Soal',
+                                      onPressed: () => _showEditQuestionDialog(q),
+                                    ),
+                                    IconButton(
                                       icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+                                      tooltip: 'Hapus Soal',
                                       onPressed: () => _deleteQuestion(q['id'] as int),
                                     ),
                                   ],

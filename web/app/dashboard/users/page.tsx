@@ -209,19 +209,19 @@ export default function UsersPage() {
         </section>
 
         {/* Action Bar & Search */}
-        <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
           <div className="flex flex-1 items-center gap-2">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari berdasarkan nama atau email pengguna..."
-              className="w-full max-w-md rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm placeholder:text-slate-400 focus:bg-white focus:outline-none"
+              className="w-full max-w-md rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2 text-sm placeholder:text-slate-400 focus:border-[#0F766E] focus:bg-white focus:outline-none"
             />
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as 'all' | 'admin' | 'teacher')}
-              className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-700 focus:bg-white focus:outline-none"
+              className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-[#0F766E] focus:bg-white focus:outline-none"
             >
               <option value="all">Semua Role</option>
               <option value="admin">Administrator</option>
@@ -231,7 +231,7 @@ export default function UsersPage() {
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-teal-900/10 active:scale-[0.99] transition"
           >
             <span>+</span>
             <span>Tambah Pengguna Baru</span>

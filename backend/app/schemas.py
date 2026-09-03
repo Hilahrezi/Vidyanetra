@@ -44,16 +44,16 @@ class TokenResponse(BaseModel):
 # ---- Classes ----
 class ClassCreate(BaseModel):
     name: str
-    grade_level: str
     subject: str = "Umum"
     teacher_id: int | None = None
+    grade_level: str | None = None
 
 
 class ClassUpdate(BaseModel):
     name: str | None = None
-    grade_level: str | None = None
     subject: str | None = None
     teacher_id: int | None = None
+    grade_level: str | None = None
 
 
 class ClassOut(ORMModel):
