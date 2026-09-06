@@ -66,18 +66,22 @@ sequenceDiagram
 * **Kartu Ujian Informatif:** Progress bar koreksi (`24/30 Siswa Terkoreksi`), rata-rata nilai, tombol unduh PDF lembar jawaban, dan tautan detail.
 
 ### 2. Detail Ujian & Analisis Asesmen (`/dashboard/exams/[id]`)
-* **Tabel Gradebook Interaktif:** Menampilkan status pengerjaan siswa, skor per butir soal, dan nilai akhir.
-* **Histogram Distribusi Nilai:** Grafik sebaran perolehan nilai siswa (interval 10 poin).
+* **4 Kartu Ringkasan KPI Ujian:** Rata-rata Nilai, Persentase Ketuntasan (KKM $\ge 70\%$), Nilai Tertinggi, dan Nilai Terendah (indikator remedial).
+* **Pencarian & Triase Filter Status:** Filter instan berdasarkan nama/nomor absen siswa serta tombol filter status (`Semua`, `Final`, `Terkoreksi AI`, `Diproses`).
+* **Histogram Distribusi Nilai:** Grafik sebaran perolehan nilai siswa (10 bucket interval).
 * **Indikator Tingkat Kesulitan Soal (Traffic Light):**
-  - 🟢 **Mudah:** Rata-rata skor butir $> 80\%$
-  - 🟡 **Sedang:** Rata-rata skor butir $40\text{--}80\%$
-  - 🔴 **Perlu Perhatian:** Rata-rata skor butir $< 40\%$
-* **Export CSV:** Unduh laporan rekap nilai lengkap satu kelas.
+  - 🟢 **Mudah:** Rata-rata skor butir $\ge 80\%$
+  - 🟡 **Sedang:** Rata-rata skor butir $40\text{--}79\%$
+  - 🔴 **Sukar / Perlu Perhatian:** Rata-rata skor butir $< 40\%$
+* **Aksi Cepat:** Tombol unduh **PDF Lembar A4 (300 DPI)** dan ekspor nilai **CSV format e-Rapor**.
 
-### 3. Review Lembar Jawaban Siswa (`/dashboard/exams/[id]/students/[sid]`)
-* Menampilkan foto asli potongan kotak tulisan tangan siswa.
-* Hasil transkripsi HWR AI, alasan evaluasi, dan keyakinan AI.
-* Form penyesuaian nilai (*manual override*) dan tombol finalisasi.
+### 3. Review Lembar Jawaban Siswa Split-View (`/dashboard/exams/[id]/students/[sid]`)
+* **Tampilan Split-View (Kiri: Scan / Kanan: Evaluasi AI):** Menampilkan potongan gambar asli tulisan tangan siswa berdampingan dengan hasil koreksi AI.
+* **Informasi Diagnostik Lengkap:** Menampilkan transkripsi HWR AI, skor kemiripan semantik ($0\text{--}100$), tingkat keyakinan (*confidence*), badge model yang mengevaluasi (`mobile-cv`, `cv-mcq`, `gemini-3.5-flash`), dan alasan evaluasi (*AI reasoning*).
+* **Intervensi Guru (Manual Override):** Slider interaktif untuk mengubah nilai per butir secara langsung tanpa re-grading AI.
+* **Tombol Cerdas:**
+  - `Ulangi Soal Gagal (Retry Failed)`: Hanya memproses ulang butir soal yang mengalami error/timeout AI.
+  - `Simpan & Finalkan Nilai`: Mengunci nilai akhir lembar jawaban siswa dan menonaktifkan form edit.
 
 ### 4. Manajemen Rombel & Kelas (`/dashboard/classes`)
 * Melihat daftar seluruh kelas, mata pelajaran, tingkat, dan guru pengampu.

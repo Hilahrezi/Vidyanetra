@@ -1,4 +1,7 @@
-# 📝 AutoGrading — Automated Exam Grading System (Vision-NLP Hybrid)
+# 📝 AutoGrading (Vidyanetra) — Automated Exam Grading System
+### *Vision-NLP Hybrid (Edge CV + Google Gemini Multimodal AI)*
+
+🌐 **Live Web Dashboard:** [https://vidyanetra.vercel.app](https://vidyanetra.vercel.app)
 
 Platform hybrid (**Mobile Scanner + Web Dashboard**) yang memanfaatkan teknologi **Edge Computer Vision** dan **Multimodal AI (Google Gemini)** untuk mengevaluasi lembar jawaban ujian tulisan tangan siswa terhadap kunci jawaban secara otomatis, akurat, dan hemat kuota.
 

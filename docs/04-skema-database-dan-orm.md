@@ -81,6 +81,8 @@ erDiagram
         float confidence
         string ai_reasoning
         string model_used "mobile-cv / cv-mcq / gemini-*"
+        string mobile_answer "a / b / c / d"
+        boolean mobile_ambiguous
         string status "pending / done / failed"
         boolean manual_override
         float overridden_score
@@ -163,6 +165,8 @@ erDiagram
 | `confidence` | `FLOAT` | ✅ | Tingkat keyakinan model AI ($0.0\text{--}1.0$). |
 | `ai_reasoning` | `TEXT` | ✅ | Penjelasan penalaran penilaian dari model AI. |
 | `model_used` | `VARCHAR(32)` | ✅ | Penanda mesin penilai: `mobile-cv`, `cv-mcq`, atau nama model Gemini. |
+| `mobile_answer` | `VARCHAR(10)` | ✅ | Hasil deteksi awal tanda silang dari Mobile Edge CV (`a`/`b`/`c`/`d`). |
+| `mobile_ambiguous` | `BOOLEAN` | ❌ | `true` jika deteksi mobile ragu/ambigu (memicu evaluasi lanjutan Tier-2/3). |
 | `status` | `VARCHAR(16)` | ❌ | Status per butir: `pending`, `done`, atau `failed`. |
 | `manual_override` | `BOOLEAN` | ❌ | Penanda apakah nilai telah diubah manual oleh guru (`false` default). |
 | `overridden_score` | `FLOAT` | ✅ | Nilai pengganti hasil intervensi manual guru. |

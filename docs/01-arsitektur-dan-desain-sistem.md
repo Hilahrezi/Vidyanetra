@@ -110,3 +110,4 @@ Berdasarkan hasil benchmark komprehensif pada dataset tulisan tangan dan lembar 
 | **Isian Singkat** | `gemini-3.5-flash-lite` | $200\text{ RPD}$ / $30\text{ RPM}$ | HWR cepat + pencocokan sinonim kata kunci. |
 | **Esai / Uraian** | `gemini-3.5-flash` | $20\text{ RPD}$ / $5\text{ RPM}$ | Evaluasi pemahaman konsep mendalam & rubrik. |
 | **Fallback Rate Limit** | `gemini-3.5-flash-lite` | Kuota terpisah | Otomatis aktif saat model Flash utama mencapai ambang 429. |
+| **Offline Dev / Mock** | `MockGeminiClient` | $0\text{ RPD}$ (Offline murni) | Aktif jika `GEMINI_MOCK_MODE=true` atau API key kosong (skor deterministik 85/45). |

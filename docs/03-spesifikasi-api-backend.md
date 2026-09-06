@@ -86,6 +86,7 @@ Kecuali endpoint publik, seluruh request wajib menyertakan header:
 * `DELETE /exams/{id}`: Menghapus ujian beserta butir soal dan riwayat hasil koreksi.
 * `GET /exams/{id}/template.pdf`: Meng-generate dan men-stream file **PDF Lembar Jawaban A4 (300 DPI)** yang siap dicetak.
 * `GET /exams/{id}/export.csv`: Mengunduh rekapitulasi nilai seluruh siswa format CSV.
+* `GET /exams/{id}/submissions`: Mengambil seluruh lembar jawaban siswa pada ujian terkait (termasuk nomor absen, nama siswa, status pengerjaan, dan total skor).
 
 ### Butir Soal (`/questions`)
 * `POST /exams/{id}/questions`: Menambahkan butir soal baru:
@@ -106,7 +107,9 @@ Kecuali endpoint publik, seluruh request wajib menyertakan header:
 ## 📥 5. Pengunggahan Crop Jawaban & Penilaian AI
 
 ### `POST /submissions/upload-crops`
-* **Deskripsi:** Menerima kiriman potongan gambar jawaban dari aplikasi mobile dan memicu evaluasi grading di background.
+* **Deskripsi:** Menerima kiriman potongan gambar jawaban dari aplikasi mobile dan memicu evaluasi grading di background (`BackgroundTasks`).
+* **Batasan Ukuran (Payload Limit):** Maksimal **5 MB** total per request (`MAX_PAYLOAD_BYTES`).
+* **Validasi Soal:** Seluruh butir soal ujian wajib ada dalam payload (`missing_crops` memicu HTTP `422`).
 * **Payload:**
   ```json
   {
@@ -116,30 +119,44 @@ Kecuali endpoint publik, seluruh request wajib menyertakan header:
       {
         "question_number": 1,
         "image_base64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDA...",
-        "mcq_answer": "B" // Opsional jika terdeteksi oleh Mobile Edge CV
+        "mcq_answer": "b",       // Opsional jika terdeteksi oleh Mobile Edge CV
+        "mcq_ambiguous": false   // true jika deteksi mobile ragu (memicu tier-2/3)
       }
     ]
   }
   ```
-* **Response `202 Accepted`:** `{"submission_id": 12, "status": "pending"}`
+* **Response `202 Accepted`:** `{"id": 12, "exam_id": 1, "student_id": 5, "status": "pending", ...}`
 
 ### `GET /submissions/{id}`
-* **Deskripsi:** Mengambil status penilaian terkini dan detail evaluasi per butir soal:
+* **Deskripsi:** Mengambil status penilaian dasar dan total skor lembar jawaban.
+
+### `GET /submissions/{id}/details`
+* **Deskripsi:** Mengambil status penilaian lengkap beserta detail evaluasi per butir soal:
   ```json
   {
     "id": 12,
+    "exam_id": 1,
+    "student_id": 5,
+    "student_name": "Aditya Pratama",
     "status": "graded",
     "total_score": 85.0,
+    "created_at": "2026-08-19T10:00:00Z",
+    "finalized_at": null,
     "details": [
       {
+        "id": 101,
+        "question_id": 1,
         "question_number": 1,
-        "extracted_text": "B",
+        "type": "mcq",
+        "image_url": "/uploads/sub_12/q1_a1b2c3d4.jpg",
+        "student_answer_text": "b",
         "similarity_score": 100.0,
         "is_correct": true,
         "confidence": 0.98,
-        "ai_reasoning": "Jawaban siswa cocok dengan kunci.",
+        "ai_reasoning": "Deteksi tanda X di aplikasi (tier-1 mobile, CV lokal).",
+        "status": "done",
         "model_used": "mobile-cv",
-        "image_path": "/uploads/crop_12_q1.jpg",
+        "mobile_answer": "b",
         "manual_override": false,
         "overridden_score": null
       }
@@ -161,7 +178,7 @@ Kecuali endpoint publik, seluruh request wajib menyertakan header:
 * **Deskripsi:** Mengulang evaluasi AI hanya untuk butir soal yang berstatus `failed` (hemat kuota).
 
 ### `POST /submissions/{id}/finalize`
-* **Deskripsi:** Mengunci hasil penilaian siswa menjadi status `finalized`.
+* **Deskripsi:** Mengunci hasil penilaian siswa menjadi status `finalized` dan menghitung skor akhir terbobot (`compute_total_score`).
 
 ---
 
@@ -169,6 +186,22 @@ Kecuali endpoint publik, seluruh request wajib menyertakan header:
 
 | Method | Endpoint | Deskripsi |
 |---|---|---|
-| `GET` | `/analytics/overview` | Ringkasan metrik global dashboard: `total_exams`, `total_classes`, `total_students`, `overall_pass_rate`, `pending_submissions_count`. |
-| `GET` | `/analytics/exams/{id}/distribution` | Histogram distribusi perolehan nilai siswa (interval 10 poin). |
-| `GET` | `/analytics/exams/{id}/question-difficulty` | Analisis tingkat kesulitan butir soal (rata-rata skor per nomor soal). |
+| `GET` | `/analytics/overview` | Ringkasan metrik global dashboard: `total_exams`, `total_classes`, `total_students`, `overall_pass_rate`, `pending_submissions_count`, `recent_submissions_count`. |
+| `GET` | `/analytics/exams/{id}/distribution` | Histogram distribusi perolehan nilai siswa (10 bucket: `0-9`, `10-19`, $\dots$, `90-100`). |
+| `GET` | `/analytics/exams/{id}/question-difficulty` | Analisis tingkat kesulitan butir soal (bobot, jumlah siswa mencoba, dan rata-rata skor per nomor). |
+
+---
+
+## 🛡️ 7. Konfigurasi Jaringan & Middleware Startup
+
+### Kebijakan CORS Dinamis
+Backend FastAPI secara default mengizinkan origin:
+- `http://localhost:3000` & `http://127.0.0.1:3000`
+- Regex Origin: `https?://(localhost|127\.0\.0\.1|.*\.vercel\.app|100\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?`
+- Nilai kustom tambahan melalui environment variable `CORS_ORIGINS`.
+
+### Lifecycle Auto-Migration (`_auto_migrate_and_seed`)
+Saat server FastAPI dimulai (*cold start*), sistem secara otomatis:
+1. Menjalankan `Base.metadata.create_all()` untuk membuat tabel jika belum ada.
+2. Memeriksa keberadaan kolom `subject` pada tabel `classes` dan `exams`, serta menjalankan dynamic `ALTER TABLE` jika kolom belum tersedia.
+3. Melakukan seeding default akun Admin (`admin@sekolah.id` / `admin123`) dan Guru (`guru@sekolah.id` / `rahasia123`) jika database masih kosong.

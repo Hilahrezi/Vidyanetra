@@ -106,14 +106,6 @@ export default function LoginPage() {
             {loading ? 'Memproses Autentikasi...' : 'Masuk ke Portal'}
           </button>
         </form>
-
-        <div className="rounded-2xl border border-[#CCFBF1] bg-[#E6F4F1] p-4 text-center text-xs text-[#0F766E] shadow-sm">
-          <p className="font-bold mb-1">👨‍🏫 Khusus Bapak / Ibu Guru Pengampu</p>
-          <p className="text-slate-600 leading-relaxed">
-            Pengelolaan soal, pemindaian lembar jawaban (*scanner*), dan koreksi asesmen dilakukan melalui{' '}
-            <strong className="text-[#0F766E]">Aplikasi Mobile Android Vidyanetra</strong>.
-          </p>
-        </div>
       </div>
     </main>
   );

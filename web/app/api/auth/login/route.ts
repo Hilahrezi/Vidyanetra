@@ -14,10 +14,11 @@ export async function POST(req: NextRequest) {
 
     const data = await resp.json().catch(() => null);
     if (!resp.ok) {
-      return NextResponse.json(
-        { detail: data?.detail || 'Email atau password salah' },
-        { status: resp.status }
-      );
+      const detail =
+        resp.status === 404
+          ? `Server backend (${API_BASE}) tidak menemukan rute /auth/login. Pastikan konfigurasi API_BASE di Vercel sudah benar.`
+          : data?.detail || 'Email atau password salah';
+      return NextResponse.json({ detail }, { status: resp.status });
     }
 
     // Validasi peran: Web Dashboard khusus Administrator Sekolah

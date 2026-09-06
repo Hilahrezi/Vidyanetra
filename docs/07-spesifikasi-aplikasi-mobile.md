@@ -51,6 +51,17 @@ flowchart TD
     Compress --> Upload["🚀 Unggah ke Backend API"]
 ```
 
+### Deteksi Opsi Silang Lokal (`McqMark`):
+```dart
+class McqMark {
+  final String answer;     // Opsi terdeteksi: "a", "b", "c", atau "d"
+  final double confidence; // Densitas piksel tinta pada kotak terpilih
+  final bool ambiguous;    // True jika densitas < 0.03 atau kontras < 1.5x
+}
+```
+* **Kompensasi Perspektif:** Algoritma membaca fraksi koordinat kotak tetap (`MCQ_BOX_FRACTIONS: a=[0.0263, 0.2105], b=[0.2895, 0.4737], c=[0.5526, 0.7368], d=[0.8158, 1.0000]`) langsung dari citra cell yang sudah di-warp.
+* **Handover Cerdas:** Nilai `answer` dan `ambiguous` dikirim dalam payload `UploadCropsRequest` (`mcq_answer` & `mcq_ambiguous`) sehingga backend tidak perlu memanggil AI jika tanda silang sudah jelas terdeteksi di ponsel.
+
 ---
 
 ## ✍️ 3. Fitur Exam & Question Builder
@@ -77,13 +88,24 @@ flowchart TD
    - Slider interaktif untuk mengubah nilai secara manual (*override*).
    - Tombol **Simpan & Finalisasi** untuk mengunci skor.
 
----
+## 📦 5. Kompilasi & Build APK Android (Optimasi Ukuran File)
 
-## 📦 5. Kompilasi & Build APK Android
+Ukuran file APK bervariasi bergantung pada target mode kompilasi:
 
-Untuk mengompilasi APK debug dengan koneksi ke server backend Tailscale:
+| Mode Build | Perintah Kompilasi | Ukuran File | Kegunaan |
+|---|---|:---:|---|
+| **Release (Split ABI - Paling Ramping ⭐)** | `flutter build apk --release --split-per-abi --dart-define=API_BASE=https://...` | **~18 MB** | Distribusi ke HP Android modern (`arm64-v8a`). |
+| **Release (Universal)** | `flutter build apk --release --dart-define=API_BASE=https://...` | **~45 MB** | 1 File APK universal untuk semua tipe arsitektur CPU. |
+| **Debug (Fat Binary)** | `flutter build apk --debug --dart-define=API_BASE=http://...` | **~158 MB** | Khusus pengembangan lokal (memuat Dart JIT Compiler + 4 ABI uncompressed). |
+
+### Perintah Kompilasi Produksi yang Direkomendasikan:
 ```powershell
 cd mobile
-flutter build apk --debug --dart-define=API_BASE=http://100.78.211.26:8000
+# Kompilasi rilis ramping per arsitektur CPU (arm64-v8a: ~18 MB)
+flutter build apk --release --split-per-abi --dart-define=API_BASE=https://autograding-api.onrender.com
 ```
-*File APK yang dihasilkan:* `mobile/build/app/outputs/flutter-apk/app-debug.apk`.
+
+*File APK yang dihasilkan:*
+* **HP Android Modern (64-bit):** `mobile/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` (**~18 MB**)
+* **HP Android Lama (32-bit):** `mobile/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk` (**~16 MB**)
+* **Emulator PC (x86_64):** `mobile/build/app/outputs/flutter-apk/app-x86_64-release.apk` (**~20 MB**)

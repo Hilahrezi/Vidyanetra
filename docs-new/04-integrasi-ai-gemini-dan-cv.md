@@ -1,12 +1,12 @@
-# 🤖 05 — Integrasi Multimodal AI & Computer Vision
+# 🤖 04 — Integrasi Multimodal AI & Computer Vision
 
-Dokumen ini menjelaskan strategi penilaian hybrid yang menggabungkan algoritma **Edge Computer Vision**, **Backend OpenCV**, dan **Google Gemini Multimodal AI (SDK `google.genai`)**.
+Dokumen ini menjelaskan arsitektur penilaian hybrid yang menggabungkan **Edge Computer Vision**, **Backend OpenCV**, dan **Google Gemini Multimodal AI (SDK `google.genai`)**.
 
 ---
 
 ## 🎯 1. Arsitektur Penilaian Hybrid 3-Tier (Pilihan Ganda / MCQ)
 
-Untuk mengoptimalkan biaya, latensi, dan kuota API Google AI Studio ($200\text{ RPD}$ / $30\text{ RPM}$), soal Pilihan Ganda dievaluasi secara berjenjang (*3-Tier Evaluation Chain*):
+Untuk mengoptimalkan latensi, biaya, dan kuota API Google AI Studio ($200\text{ RPD}$ / $30\text{ RPM}$), soal Pilihan Ganda dievaluasi secara berjenjang (*3-Tier Evaluation Chain*):
 
 ```mermaid
 flowchart TD
@@ -25,19 +25,19 @@ flowchart TD
 
 ### Kriteria Ambigu & Ambang Batas (*Threshold*):
 * **Densitas Minimum:** Kotak dengan persentase piksel tinta $< 3\%$ dianggap kosong.
-* **Rasio Kontras Pilihan:** Kotak pilihan terbanyak harus memiliki densitas minimal $1.5\times$ lebih pekat daripada pilihan terbanyak kedua. Jika rasio $< 1.5$, tanda silang dianggap ambigu (misal siswa mencoret dua kotak) dan diteruskan ke tier berikutnya.
+* **Rasio Kontras Pilihan:** Kotak pilihan terbanyak harus memiliki densitas minimal $1.5\times$ lebih pekat daripada pilihan terbanyak kedua. Jika rasio $< 1.5$, tanda silang dianggap ambigu dan diteruskan ke tier berikutnya.
 
 ---
 
-## ⚡ 2. Routing Model AI & Interleaved Prompt Batching
+## ⚡ 2. Routing Model AI & Interleaved Multimodal Batching
 
 ### Pemetaan Model Per Tugas
-* **Isian Singkat:** `gemini-3.5-flash-lite` (Batch 10 item/request). Cepat dalam mengekstraksi teks tulisan tangan (*HWR*) dan mencocokkan kemiripan semantik terhadap daftar sinonim kunci.
-* **Esai / Uraian:** `gemini-3.5-flash` (Batch 10 item/request). Memiliki kapasitas penalaran kontekstual yang lebih kuat untuk mengevaluasi pemahaman konsep dan memberikan alasan penilaian (*ai_reasoning*).
-* **Fallback Otomatis:** Jika model `flash` mengalami HTTP `429 Too Many Requests`, sistem secara otomatis mengalihkan evaluasi esai ke `gemini-3.5-flash-lite` dan mencatat `model_used` pada database.
+* **Isian Singkat:** `gemini-3.5-flash-lite` (Batch 10 item/request). Cepat mengekstraksi teks tulisan tangan (*HWR*) dan mencocokkan kemiripan semantik terhadap daftar sinonim kunci.
+* **Esai / Uraian:** `gemini-3.5-flash` (Batch 10 item/request). Memiliki kapasitas penalaran kontekstual mendalam untuk mengevaluasi pemahaman konsep dan memberikan alasan penilaian (*ai_reasoning*).
+* **Fallback Otomatis:** Jika model `flash` mengalami HTTP `429 Too Many Requests`, sistem otomatis mengalihkan evaluasi ke `gemini-3.5-flash-lite`.
 
 ### Interleaved Multimodal Batching
-Backend menggabungkan beberapa gambar crop ke dalam **1 request API tunggal** untuk menghemat batas RPM:
+Backend menggabungkan beberapa gambar crop ke dalam **1 request API tunggal** untuk mematuhi batas RPM:
 ```
 Parts: [
   Image_1, Text("Soal 1. Kunci: A"),
@@ -59,9 +59,8 @@ Kunci jawaban: "<answer_key>" (Alternatif jawaban benar dipisahkan tanda '|').
 
 Instruksi Penilaian:
 1. Ekstraksi teks yang ditulis siswa apa adanya ke dalam 'extracted_text'.
-2. Berikan 'similarity_score' (0 - 100) berdasarkan kesamaan makna terhadap salah satu kunci jawaban alternatif.
+2. Berikan 'similarity_score' (0 - 100) berdasarkan kesamaan makna terhadap salah satu kunci jawaban alternatif (rumus setara dengan konsep).
 3. Berikan 'is_correct' = true jika similarity_score >= 70, false jika sebaliknya.
-4. Jangan berasumsi jika gambar kosong.
 ```
 
 ### Template Soal Esai / Uraian
@@ -99,39 +98,13 @@ Instruksi Penilaian:
 
 ## ⚖️ 4. Formula Akumulasi Skor Akhir (`GradingService`)
 
-Perhitungan nilai akhir lembar jawaban siswa diformulasikan secara berbobot:
-
 $$\text{Nilai Butir}_i = \begin{cases} \text{overridden\_score}_i & \text{jika } \text{manual\_override} = \text{true} \\ \text{similarity\_score}_i & \text{jika } \text{manual\_override} = \text{false} \end{cases}$$
 
 $$\text{Skor Akhir Siswa} = \frac{\sum_{i=1}^{N} \left( \text{Nilai Butir}_i \times \text{weight}_i \right)}{\sum_{i=1}^{N} \text{weight}_i} \times \frac{\text{Total Skor Ujian}}{100}$$
 
-Nilai akhir dibulatkan hingga 2 angka di belakang koma.
-
 ---
 
-## 🔒 5. Thread-Safety & Konversi Dataclass `BatchItem`
+## 🔒 5. Thread-Safety `BatchItem` & Offline Mock Mode
 
-Untuk menghindari konflik *race condition* dan *lazy-loading session* SQLAlchemy pada eksekusi multithread (`ThreadPoolExecutor`), sistem menerapkan pola konversi objek:
-1. Objek ORM `SubmissionDetail` diekstraksi terlebih dahulu ke dalam dataclass murni `BatchItem` pada thread utama:
-   ```python
-   @dataclass
-   class BatchItem:
-       submission_id: int
-       question_number: int
-       type: str
-       answer_key: str
-       image_path: str
-       mobile_answer: str | None = None
-       mobile_ambiguous: bool = False
-   ```
-2. Batch yang berisi `BatchItem` dieksekusi secara paralel di worker thread pool tanpa memegang *database lock*.
-3. Hasil evaluasi AI dikumpulkan dan ditulis kembali (*committed*) ke database secara terisolasi via fungsi `apply_gemini_results(db, results)`.
-
----
-
-## 🧪 6. Mesin Simulasi Dev / Offline (`MockGeminiClient`)
-
-Untuk memfasilitasi pengujian unit (`pytest`), demonstrasi lomba offline, dan pengembangan tanpa menguras kuota API Google AI Studio:
-* **Aktivasi:** Secara otomatis aktif jika `GEMINI_MOCK_MODE=true` atau jika variabel `GEMINI_API_KEY` dikosongkan.
-* **Karakteristik Output:** Menghasilkan skor simulasi deterministik (85.0 untuk nomor ganjil / 45.0 untuk kelipatan 3, status `done`, `model_used: 'mock'`).
-* **Efisiensi:** Mengizinkan full end-to-end testing pipeline ($0\text{ kuota API}$, latensi $< 50\text{ ms}$).
+* **Isolasi Thread-Safety:** Sebelum dikirim ke `ThreadPoolExecutor`, seluruh objek ORM disalin ke dataclass murni `BatchItem`, mencegah konflik *lazy-loading* pada session database concurrent.
+* **Mode Offline Dev (`MockGeminiClient`):** Aktif saat `GEMINI_MOCK_MODE=true` atau API Key kosong, mengembalikan skor deterministik (85.0/45.0) untuk pengujian lokal tanpa biaya kuota.

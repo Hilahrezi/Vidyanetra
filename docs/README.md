@@ -1,7 +1,9 @@
-# 📚 Dokumentasi Resmi — AutoGrading System
+# 📚 Dokumentasi Resmi — AutoGrading (Vidyanetra)
 ### *Sistem Asesmen & Koreksi Ujian Otomatis (Edge CV + Multimodal AI)*
 
-Selamat datang di repositori dokumentasi resmi sistem **AutoGrading**. Sistem ini menggabungkan teknologi **Edge Computer Vision (Pure Dart)** pada perangkat mobile Android, **Backend API Orchestrator (FastAPI)**, **Multimodal AI (Google Gemini)**, dan **Web Dashboard Analitik (Next.js 16)** untuk menyediakan solusi koreksi lembar jawaban ujian tulisan tangan secara akurat, cepat, dan hemat kuota.
+🌐 **Live Web Dashboard:** [https://vidyanetra.vercel.app](https://vidyanetra.vercel.app)
+
+Selamat datang di repositori dokumentasi resmi sistem **AutoGrading (Vidyanetra)**. Sistem ini menggabungkan teknologi **Edge Computer Vision (Pure Dart)** pada perangkat mobile Android, **Backend API Orchestrator (FastAPI)**, **Multimodal AI (Google Gemini)**, dan **Web Dashboard Analitik (Next.js 16)** untuk menyediakan solusi koreksi lembar jawaban ujian tulisan tangan secara akurat, cepat, dan hemat kuota.
 
 ---
 
