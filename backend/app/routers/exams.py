@@ -1,5 +1,6 @@
 import csv
 import io
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import require_teacher
+from ..config import settings
 from ..database import get_db
 from ..services.grading import effective_score
 from ..services.template_service import build_pdf
@@ -322,5 +324,12 @@ def delete_exam(
     db: Session = Depends(get_db),
 ):
     exam = _owned_exam(exam_id, user, db)
+
+    subs = db.query(models.Submission.id).filter(models.Submission.exam_id == exam_id).all()
+    for (sub_id,) in subs:
+        folder = settings.upload_path / f"sub_{sub_id}"
+        if folder.exists():
+            shutil.rmtree(folder, ignore_errors=True)
+
     db.delete(exam)
     db.commit()

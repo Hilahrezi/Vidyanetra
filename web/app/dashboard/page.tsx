@@ -63,6 +63,26 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
+  async function handleDeleteExam(examId: number, examTitle: string) {
+    if (
+      !confirm(
+        `Apakah Anda yakin ingin menghapus ujian "${examTitle}"? Seluruh data hasil scan dan penilaian LJK terkait akan ikut terhapus.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/exams/${examId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.detail ?? 'Gagal menghapus ujian');
+      }
+      setExams((prev) => (prev ? prev.filter((e) => e.id !== examId) : null));
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Gagal menghapus ujian');
+    }
+  }
+
   // Unique subjects for filter
   const availableSubjects = useMemo(() => {
     if (!exams) return [];
@@ -76,14 +96,19 @@ export default function DashboardPage() {
     return Array.from(set);
   }, [exams]);
 
-  // Unique classes for filter
+  // Unique classes for filter (pure class names only, e.g. "8A", "12 IPA 1")
   const availableClasses = useMemo(() => {
     if (!exams) return [];
     const set = new Set<string>();
     exams.forEach((e) => {
-      if (e.class_name) set.add(e.class_name);
+      if (e.class_name) {
+        const cleanName = e.class_name.includes(' — ')
+          ? e.class_name.split(' — ')[1].trim()
+          : e.class_name.trim();
+        set.add(cleanName);
+      }
     });
-    return Array.from(set);
+    return Array.from(set).sort();
   }, [exams]);
 
   // Filtered exam list
@@ -100,7 +125,12 @@ export default function DashboardPage() {
         exam.subject === selectedSubject ||
         (exam.class_name && exam.class_name.startsWith(selectedSubject));
 
-      const matchClass = selectedClass === 'all' || exam.class_name === selectedClass;
+      const cleanExamClass = exam.class_name
+        ? exam.class_name.includes(' — ')
+          ? exam.class_name.split(' — ')[1].trim()
+          : exam.class_name.trim()
+        : '';
+      const matchClass = selectedClass === 'all' || cleanExamClass === selectedClass;
 
       return matchSearch && matchSubject && matchClass;
     });
@@ -123,14 +153,9 @@ export default function DashboardPage() {
               />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-extrabold tracking-tight text-[#0F172A]">
-                  Vidyanetra
-                </h1>
-                <span className="rounded-full bg-[#E6F4F1] border border-[#CCFBF1] px-2 py-0.5 text-[10px] font-bold text-[#0F766E] uppercase tracking-wider">
-                  Academic Vision
-                </span>
-              </div>
+              <h1 className="text-lg font-extrabold tracking-tight text-[#0F172A]">
+                Vidyanetra
+              </h1>
               <p className="text-[11px] text-slate-500 font-medium">
                 Portal Manajemen Asesmen & Evaluasi Semantik AI
               </p>
@@ -148,7 +173,7 @@ export default function DashboardPage() {
             {user?.role === 'admin' && (
               <Link
                 href="/dashboard/users"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[#CCFBF1] bg-[#E6F4F1] px-3.5 py-1.5 text-xs font-bold text-[#0F766E] hover:bg-[#CCFBF1] transition shadow-sm"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:border-[#0F766E] hover:text-[#0F766E] hover:bg-[#E6F4F1]/40 transition shadow-sm"
               >
                 <span>👥</span>
                 <span>Kelola Pengguna</span>
@@ -190,10 +215,6 @@ export default function DashboardPage() {
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Ringkasan Asesmen Sekolah
             </h2>
-            <span className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
-              <span className="h-2 w-2 rounded-full bg-[#10B981] animate-pulse"></span>
-              Pembaruan Real-Time
-            </span>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -419,17 +440,16 @@ export default function DashboardPage() {
 
                   {/* Actions Bar */}
                   <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
-                    <a
-                      href={`/api/exams/${exam.id}/template.pdf`}
-                      download
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#0F766E] hover:text-[#0F766E] transition shadow-sm"
-                      title="Download PDF Lembar Jawaban A4"
-                    >
-                      <span>📄</span>
-                      <span>PDF LJK A4</span>
-                    </a>
-
                     <div className="flex items-center gap-2">
+                      <a
+                        href={`/api/exams/${exam.id}/template.pdf`}
+                        download
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#0F766E] hover:text-[#0F766E] transition shadow-sm"
+                        title="Download PDF Lembar Jawaban A4"
+                      >
+                        <span>📄</span>
+                        <span>PDF LJK</span>
+                      </a>
                       <a
                         href={`/api/exams/${exam.id}/export.csv`}
                         download
@@ -439,6 +459,17 @@ export default function DashboardPage() {
                         <span>📥</span>
                         <span>CSV</span>
                       </a>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDeleteExam(exam.id, exam.title)}
+                        className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50/60 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition shadow-sm"
+                        title="Hapus Ujian"
+                      >
+                        <span>🗑️</span>
+                        <span>Hapus</span>
+                      </button>
                       <Link
                         href={`/dashboard/exams/${exam.id}`}
                         className="inline-flex items-center gap-1 rounded-xl bg-[#0F766E] hover:bg-[#115E59] px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"

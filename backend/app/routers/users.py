@@ -1,8 +1,11 @@
+import shutil
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import hash_password, require_admin
+from ..config import settings
 from ..database import get_db
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -118,6 +121,18 @@ def delete_user(
     user = db.get(models.User, user_id)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User tidak ditemukan")
+
+    class_ids = [c.id for c in user.classes]
+    if class_ids:
+        exam_ids = [
+            e_id for (e_id,) in db.query(models.Exam.id).filter(models.Exam.class_id.in_(class_ids)).all()
+        ]
+        if exam_ids:
+            subs = db.query(models.Submission.id).filter(models.Submission.exam_id.in_(exam_ids)).all()
+            for (sub_id,) in subs:
+                folder = settings.upload_path / f"sub_{sub_id}"
+                if folder.exists():
+                    shutil.rmtree(folder, ignore_errors=True)
 
     db.delete(user)
     db.commit()

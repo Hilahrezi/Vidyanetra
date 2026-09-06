@@ -20,7 +20,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
-    classes: Mapped[list["Class"]] = relationship(back_populates="teacher")
+    classes: Mapped[list["Class"]] = relationship(back_populates="teacher", cascade="all, delete-orphan")
 
 
 class Class(Base):
@@ -46,7 +46,7 @@ class Student(Base):
     student_number: Mapped[str] = mapped_column(String(30))
 
     class_: Mapped[Class] = relationship(back_populates="students")
-    submissions: Mapped[list["Submission"]] = relationship(back_populates="student")
+    submissions: Mapped[list["Submission"]] = relationship(back_populates="student", cascade="all, delete-orphan")
 
 
 class Exam(Base):
@@ -76,6 +76,7 @@ class Question(Base):
     batch_group: Mapped[str | None] = mapped_column(String(10), nullable=True)  # lite | flash
 
     exam: Mapped[Exam] = relationship(back_populates="questions")
+    details: Mapped[list["SubmissionDetail"]] = relationship(back_populates="question", cascade="all, delete-orphan")
 
 
 class Submission(Base):
@@ -114,4 +115,4 @@ class SubmissionDetail(Base):
     overridden_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     submission: Mapped[Submission] = relationship(back_populates="details")
-    question: Mapped[Question] = relationship()
+    question: Mapped[Question] = relationship(back_populates="details")

@@ -221,3 +221,26 @@ def test_auto_calculated_exam_score(client, teacher_a, admin_user):
     assert del_resp.status_code == 204
     e4 = client.get(f"/exams/{exam_id}", headers=headers).json()
     assert e4["total_score"] == 15
+
+    # 5. Add questions with weights that exceed 100 -> auto rescale to 100
+    q_heavy = _create_question(client, teacher_a, exam_id, number=3, qtype="essay", weight=150)
+    e5 = client.get(f"/exams/{exam_id}", headers=headers).json()
+    assert e5["total_score"] == 100
+
+
+def test_cascade_delete_class_with_data(client, teacher_a, admin_user):
+    admin_headers = auth_headers(admin_user)
+    teacher_headers = auth_headers(teacher_a)
+    class_id = create_test_class(client, admin_user, teacher_a, name="Kelas 9Z")
+    student_id = create_test_student(client, admin_user, class_id, name="Budi", number="01")
+    exam = _create_exam(client, teacher_a, class_id)
+    exam_id = exam["id"]
+    _create_question(client, teacher_a, exam_id, number=1, qtype="mcq", weight=10)
+
+    # Delete class as admin
+    del_res = client.delete(f"/classes/{class_id}", headers=admin_headers)
+    assert del_res.status_code == 204
+
+    # Verify class, exam, student are gone
+    assert client.get(f"/classes/{class_id}", headers=teacher_headers).status_code == 404
+    assert client.get(f"/exams/{exam_id}", headers=teacher_headers).status_code == 404

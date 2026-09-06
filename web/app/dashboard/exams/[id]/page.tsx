@@ -102,6 +102,26 @@ export default function ExamDetailPage() {
     ],
   };
 
+  async function handleDeleteExam() {
+    if (
+      !confirm(
+        `Apakah Anda yakin ingin menghapus ujian "${exam?.title ?? ''}"? Seluruh data hasil scan dan penilaian LJK terkait akan ikut terhapus.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/exams/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.detail ?? 'Gagal menghapus ujian');
+      }
+      window.location.href = '/dashboard';
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Gagal menghapus ujian');
+    }
+  }
+
   const displaySubject =
     exam?.subject ||
     (exam?.class_name && exam?.class_name.includes(' — ')
@@ -158,6 +178,14 @@ export default function ExamDetailPage() {
               <span>📥</span>
               <span>Export CSV</span>
             </a>
+            <button
+              onClick={handleDeleteExam}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-100 shadow-sm transition"
+              title="Hapus Ujian"
+            >
+              <span>🗑️</span>
+              <span>Hapus</span>
+            </button>
           </div>
         </div>
       </header>

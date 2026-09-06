@@ -19,16 +19,35 @@ def _owned_question(question_id: int, user: models.User, db: Session) -> models.
 
 
 def _recalculate_exam_score(exam_id: int, db: Session) -> None:
-    total = (
-        db.query(func.sum(models.Question.weight))
+    questions = (
+        db.query(models.Question)
         .filter(models.Question.exam_id == exam_id)
-        .scalar()
-        or 0
+        .order_by(models.Question.question_number)
+        .all()
     )
+    if not questions:
+        exam = db.get(models.Exam, exam_id)
+        if exam:
+            exam.total_score = 100
+            db.commit()
+        return
+
+    total_weight = sum(q.weight for q in questions)
+    if total_weight > 100:
+        allocated = 0.0
+        for i, q in enumerate(questions):
+            if i == len(questions) - 1:
+                q.weight = round(100.0 - allocated, 2)
+            else:
+                new_w = round((q.weight / total_weight) * 100.0, 2)
+                q.weight = new_w
+                allocated += new_w
+        total_weight = 100.0
+
     exam = db.get(models.Exam, exam_id)
     if exam:
-        exam.total_score = int(round(total))
-        db.commit()
+        exam.total_score = int(round(total_weight))
+    db.commit()
 
 
 @router.post("/exams/{exam_id}/questions", response_model=schemas.QuestionOut, status_code=status.HTTP_201_CREATED)

@@ -233,22 +233,14 @@ export default function ClassesPage() {
           </div>
         )}
 
-        {/* 4 KPI Summary Cards */}
-        <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 3 KPI Summary Cards */}
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-[#CCFBF1] bg-gradient-to-br from-[#E6F4F1]/80 to-white p-5 shadow-sm">
             <span className="text-xs font-bold text-[#0F766E] uppercase">Total Rombel / Kelas</span>
             <p className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A]">
               {metrics.totalClasses} <span className="text-sm font-normal text-slate-400">Kelas</span>
             </p>
             <p className="mt-1 text-xs text-[#0F766E]/80 font-medium">Terdaftar di sistem</p>
-          </div>
-
-          <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50/50 to-white p-5 shadow-sm">
-            <span className="text-xs font-bold text-teal-800 uppercase">Total Siswa Terdata</span>
-            <p className="mt-2 text-3xl font-extrabold tracking-tight text-[#0F172A]">
-              {metrics.totalStudents} <span className="text-sm font-normal text-slate-400">Siswa</span>
-            </p>
-            <p className="mt-1 text-xs text-teal-700/80 font-medium">Tersebar di seluruh rombel</p>
           </div>
 
           <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/60 to-white p-5 shadow-sm">

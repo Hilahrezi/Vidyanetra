@@ -1,10 +1,12 @@
 import re
+import shutil
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import require_admin, require_teacher
+from ..config import settings
 from ..database import get_db
 
 router = APIRouter(prefix="/classes", tags=["classes"])
@@ -133,5 +135,14 @@ def delete_class(
     class_ = db.get(models.Class, class_id)
     if class_ is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kelas tidak ditemukan")
+
+    exam_ids = [e.id for e in class_.exams]
+    if exam_ids:
+        subs = db.query(models.Submission.id).filter(models.Submission.exam_id.in_(exam_ids)).all()
+        for (sub_id,) in subs:
+            folder = settings.upload_path / f"sub_{sub_id}"
+            if folder.exists():
+                shutil.rmtree(folder, ignore_errors=True)
+
     db.delete(class_)
     db.commit()
