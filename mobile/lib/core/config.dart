@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class AppConfig {
   static const String defaultApiBase = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'https://vidyantera.onrender.com',
+    defaultValue: 'https://vidyanetra.onrender.com',
   );
 
   static const _storage = FlutterSecureStorage();
@@ -16,8 +16,13 @@ class AppConfig {
 
   static Future<void> init() async {
     final saved = await _storage.read(key: _keyApiBase);
-    if (saved != null && saved.trim().isNotEmpty) {
+    if (saved != null && saved.trim().isNotEmpty && !saved.contains('vidyantera')) {
       _currentApiBase = saved.trim().replaceAll(RegExp(r'/+$'), '');
+    } else {
+      _currentApiBase = defaultApiBase;
+      if (saved != null && saved.contains('vidyantera')) {
+        await _storage.delete(key: _keyApiBase);
+      }
     }
   }
 
