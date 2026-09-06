@@ -21,22 +21,25 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Guru as 👨‍🏫 Guru / Admin
-    participant Client as 📱 Mobile / 🖥️ Web
+    actor Admin as 👨‍💼 Administrator
+    actor Guru as 👨‍🏫 Guru Pengampu
+    participant Web as 🖥️ Web Dashboard
+    participant Mobile as 📱 Mobile App
     participant BE as ⚙️ Backend FastAPI
     participant PDF as 📄 ReportLab Engine
 
-    Guru->>Client: Buat Kelas & Rombel (Mapel, Tingkat, Guru Pengampu)
-    Guru->>Client: Buat Ujian Baru (Judul Ujian, Kelas Tujuan)
-    Guru->>Client: Tambah Butir Soal & Kunci Jawaban
-    Note over Client,BE: Total Skor dihitung otomatis dari akumulasi bobot butir soal
-    Client->>BE: POST /exams/{id}/questions (MCQ: 5pt, Isian: 10pt, Esai: 20pt)
-    BE-->>Client: Data Ujian & Soal Tersimpan
-    Guru->>Client: Klik "Download PDF Lembar Jawaban (A4)"
-    Client->>BE: GET /exams/{id}/template.pdf
+    Admin->>Web: Buat Kelas & Rombel (Mapel, Tingkat, Guru Pengampu)
+    Web->>BE: POST /classes (Disimpan ke DB)
+    Guru->>Mobile: Pilih Kelas & Buat Ujian Baru
+    Guru->>Mobile: Tambah Butir Soal & Kunci Jawaban
+    Note over Mobile,BE: Total Skor dihitung otomatis dari akumulasi bobot butir soal
+    Mobile->>BE: POST /exams/{id}/questions (MCQ: 5pt, Isian: 10pt, Esai: 20pt)
+    BE-->>Mobile: Data Ujian & Soal Tersimpan
+    Guru->>Mobile: Klik "Download PDF Lembar Jawaban (A4)"
+    Mobile->>BE: GET /exams/{id}/template.pdf
     BE->>PDF: build_pdf(questions, title, class_name)
     PDF-->>BE: Stream PDF A4 (300 DPI, 4 Fiducial Marker, Grid Box)
-    BE-->>Client: Unduh File PDF
+    BE-->>Mobile: Unduh File PDF
     Guru->>Guru: Cetak PDF di Kertas A4 Standar
 ```
 
