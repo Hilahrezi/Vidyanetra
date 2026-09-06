@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 
 export default function LoginPage() {
@@ -25,7 +26,7 @@ export default function LoginPage() {
       }
       window.location.href = '/dashboard';
     } catch (err: unknown) {
-      setError('Tidak dapat terhubung ke server backend. Pastikan server sedang berjalan.');
+      setError(err instanceof Error ? err.message : 'Koneksi ke server gagal.');
     } finally {
       setLoading(false);
     }
@@ -38,24 +39,17 @@ export default function LoginPage() {
           onSubmit={submit}
           className="rounded-3xl bg-white p-8 shadow-xl shadow-slate-200/50 border border-slate-200/80"
         >
-          {/* Vidyanetra Brand Icon */}
+          {/* Vidyanetra Brand Logo */}
           <div className="flex justify-center mb-3">
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#0F766E] to-[#14B8A6] text-white shadow-lg shadow-teal-900/20">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
-              <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-[#10B981] border-2 border-white animate-pulse" />
+            <div className="relative flex h-16 w-auto items-center justify-center">
+              <Image
+                src="/vidyanetra_logo.png"
+                alt="Vidyanetra Logo"
+                width={120}
+                height={94}
+                className="h-16 w-auto object-contain drop-shadow-sm"
+                priority
+              />
             </div>
           </div>
 

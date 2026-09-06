@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -111,22 +112,15 @@ export default function DashboardPage() {
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0F766E] to-[#14B8A6] font-bold text-white shadow-md shadow-teal-900/20">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
-              <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#10B981] border-2 border-white" />
+            <div className="relative flex h-10 w-auto items-center justify-center">
+              <Image
+                src="/vidyanetra_logo.png"
+                alt="Vidyanetra Logo"
+                width={48}
+                height={38}
+                className="h-10 w-auto object-contain drop-shadow-sm"
+                priority
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
