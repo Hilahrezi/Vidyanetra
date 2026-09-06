@@ -202,7 +202,7 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {/* Card 1: Total Exams */}
             <div className="rounded-2xl border border-[#CCFBF1] bg-gradient-to-br from-[#E6F4F1]/80 to-white p-5 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
@@ -227,19 +227,7 @@ export default function DashboardPage() {
               <p className="mt-1 text-xs text-teal-700/80 font-medium">Rombongan belajar terdaftar</p>
             </div>
 
-            {/* Card 3: Pending Submissions */}
-            <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50/60 to-white p-5 shadow-sm transition hover:shadow-md">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-amber-800 uppercase">Koreksi Antrean</span>
-                <span className="rounded-xl bg-white p-2 text-amber-700 shadow-sm text-sm">⏳</span>
-              </div>
-              <p className="mt-3 text-3xl font-extrabold tracking-tight text-amber-950">
-                {overview?.pending_submissions_count ?? (loading ? '...' : 0)}
-              </p>
-              <p className="mt-1 text-xs text-amber-700/80 font-medium">Lembar jawaban dalam pemrosesan</p>
-            </div>
-
-            {/* Card 4: Pass Rate */}
+            {/* Card 3: Pass Rate */}
             <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/60 to-white p-5 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-emerald-800 uppercase">Rata-rata Ketuntasan</span>
