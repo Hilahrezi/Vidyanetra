@@ -1,8 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
-import '../../core/config.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,159 +14,6 @@ class _LoginPageState extends State<LoginPage> {
   final _password = TextEditingController(text: 'rahasia123');
   bool _loading = false;
   String? _error;
-
-  Future<void> _showServerSettingsDialog() async {
-    final controller = TextEditingController(text: AppConfig.apiBase);
-    String? testStatus;
-    Color? testColor;
-    bool testing = false;
-
-    final selected = await showDialog<String>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (dialogCtx, setDialogState) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.dns, color: Color(0xFF0F766E)),
-              SizedBox(width: 8),
-              Text('Pengaturan Server Vidyanetra', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Masukkan alamat base URL backend FastAPI:',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Base URL',
-                    hintText: 'http://100.78.211.26:8000',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  icon: testing
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.network_check, size: 16),
-                  label: const Text('Tes Koneksi ke Server', style: TextStyle(fontSize: 12)),
-                  onPressed: testing
-                      ? null
-                      : () async {
-                          setDialogState(() {
-                            testing = true;
-                            testStatus = 'Menghubungi server...';
-                            testColor = Colors.teal[800];
-                          });
-                          final rawUrl = controller.text.trim().replaceAll(RegExp(r'/+$'), '');
-                          try {
-                            final dio = Dio(BaseOptions(
-                              connectTimeout: const Duration(seconds: 3),
-                              receiveTimeout: const Duration(seconds: 3),
-                            ));
-                            final resp = await dio.get('$rawUrl/health');
-                            if (resp.statusCode == 200) {
-                              setDialogState(() {
-                                testing = false;
-                                testStatus = '✅ Terhubung! Server Vidyanetra aktif.';
-                                testColor = Colors.green[800];
-                              });
-                            } else {
-                              setDialogState(() {
-                                testing = false;
-                                testStatus = '⚠️ Respons server (${resp.statusCode}).';
-                                testColor = Colors.orange[800];
-                              });
-                            }
-                          } catch (e) {
-                            setDialogState(() {
-                              testing = false;
-                              testStatus = '❌ Tidak dapat terhubung. Cek koneksi server.';
-                              testColor = Colors.red[700];
-                            });
-                          }
-                        },
-                ),
-                if (testStatus != null) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    testStatus!,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: testColor),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                const SizedBox(height: 16),
-                const Text('Preset Cepat:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    ActionChip(
-                      label: const Text('Tailscale (100.78.211.26)', style: TextStyle(fontSize: 11)),
-                      onPressed: () {
-                        setDialogState(() {
-                          controller.text = 'http://100.78.211.26:8000';
-                          testStatus = null;
-                        });
-                      },
-                    ),
-                    ActionChip(
-                      label: const Text('ADB USB (127.0.0.1)', style: TextStyle(fontSize: 11)),
-                      onPressed: () {
-                        setDialogState(() {
-                          controller.text = 'http://127.0.0.1:8000';
-                          testStatus = null;
-                        });
-                      },
-                    ),
-                    ActionChip(
-                      label: const Text('Emulator (10.0.2.2)', style: TextStyle(fontSize: 11)),
-                      onPressed: () {
-                        setDialogState(() {
-                          controller.text = 'http://10.0.2.2:8000';
-                          testStatus = null;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Batal'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-              child: const Text('Simpan'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (selected != null && selected.isNotEmpty) {
-      await AppConfig.setApiBase(selected);
-      ApiClient.instance.updateBaseUrl(AppConfig.apiBase);
-      if (mounted) {
-        setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Server URL diubah ke: ${AppConfig.apiBase}')),
-        );
-      }
-    }
-  }
 
   Future<void> _submit() async {
     setState(() {
@@ -189,16 +34,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_rounded),
-            tooltip: 'Pengaturan Server',
-            onPressed: _showServerSettingsDialog,
-          ),
-        ],
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -228,8 +67,8 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(16),
                       child: Image.asset(
                         'assets/images/vidyanetra_logo.png',
-                        height: 76,
-                        width: 76,
+                        height: 80,
+                        width: 80,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -251,12 +90,6 @@ class _LoginPageState extends State<LoginPage> {
                   'Intelligent Academic Vision & Assessment',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.black54),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Server: ${AppConfig.apiBase}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 11, color: Colors.black38, fontFamily: 'monospace'),
                 ),
                 const SizedBox(height: 28),
                 TextField(
@@ -299,7 +132,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 22),
+                const SizedBox(height: 24),
                 FilledButton(
                   onPressed: _loading ? null : _submit,
                   style: FilledButton.styleFrom(
@@ -309,14 +142,6 @@ class _LoginPageState extends State<LoginPage> {
                   child: _loading
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text('Masuk ke Vidyanetra', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.settings_ethernet, size: 16),
-                    label: const Text('Ubah Alamat Server', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    onPressed: _showServerSettingsDialog,
-                  ),
                 ),
               ],
             ),

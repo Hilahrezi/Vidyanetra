@@ -199,8 +199,6 @@ class _ExamAnalyticsPageState extends State<ExamAnalyticsPage> with SingleTicker
                   final qNum = q['question_number'];
                   final qType = (q['type'] ?? 'mcq').toString().toUpperCase();
                   final avgScore = (q['average_score'] as num?)?.toDouble() ?? 0.0;
-                  final weight = (q['weight'] as num?)?.toDouble() ?? 10.0;
-                  final percentage = weight > 0 ? (avgScore / 100) : 0.0; // similarity_score is 0-100
 
                   Color diffColor = Colors.green;
                   String diffLabel = 'Mudah';

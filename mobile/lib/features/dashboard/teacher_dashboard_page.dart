@@ -36,14 +36,28 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
       ]);
 
       if (mounted) {
+        final examsList = List<dynamic>.from(results[2] as List<dynamic>);
+        examsList.sort((a, b) {
+          final aId = (a['id'] as num?)?.toInt() ?? 0;
+          final bId = (b['id'] as num?)?.toInt() ?? 0;
+          return bId.compareTo(aId); // Paling baru di atas
+        });
+
         setState(() {
           _teacher = results[0] as Map<String, dynamic>;
           _classes = results[1] as List<dynamic>;
-          _exams = results[2] as List<dynamic>;
+          _exams = examsList;
           _loading = false;
         });
       }
     } on ApiException catch (e) {
+      if (e.message.toLowerCase().contains('unauthorized') || e.message.toLowerCase().contains('credential')) {
+        await ApiClient.instance.logout();
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/login');
+          return;
+        }
+      }
       if (mounted) {
         setState(() {
           _error = e.message;
@@ -254,6 +268,40 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
     );
   }
 
+  Future<void> _confirmLogout() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.logout, color: Colors.redAccent),
+            SizedBox(width: 8),
+            Text('Konfirmasi Keluar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: const Text('Apakah Anda yakin ingin keluar dari akun Vidyanetra?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Keluar'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true) {
+      await ApiClient.instance.logout();
+      if (mounted && context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final teacherName = _teacher?['name'] ?? 'Guru';
@@ -275,12 +323,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.redAccent),
             tooltip: 'Keluar',
-            onPressed: () async {
-              await ApiClient.instance.logout();
-              if (mounted && context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
-              }
-            },
+            onPressed: _confirmLogout,
           ),
         ],
       ),
@@ -461,6 +504,12 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                               separatorBuilder: (_, __) => const SizedBox(width: 10),
                               itemBuilder: (context, i) {
                                 final c = _classes![i];
+                                final rawName = (c['name'] as String? ?? 'Kelas').trim();
+                                final subject = (c['subject'] as String? ?? '').trim().isNotEmpty
+                                    ? (c['subject'] as String).trim()
+                                    : (rawName.contains(' — ') ? rawName.split(' — ')[0].trim() : 'Mata Pelajaran');
+                                final className = rawName.contains(' — ') ? rawName.split(' — ')[1].trim() : rawName;
+
                                 return InkWell(
                                   onTap: () => Navigator.of(context).pushNamed('/exams', arguments: c['id']),
                                   borderRadius: BorderRadius.circular(14),
@@ -485,22 +534,25 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.indigo.withOpacity(0.1),
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFFE6F4F1),
                                             shape: BoxShape.circle,
                                           ),
-                                          child: const Icon(Icons.school, size: 20, color: Colors.indigo),
+                                          child: const Icon(Icons.school, size: 18, color: Color(0xFF0F766E)),
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          c['name'] ?? 'Kelas',
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                          className,
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
+                                        const SizedBox(height: 2),
                                         Text(
-                                          'Tingkat ${c['grade_level']}',
-                                          style: const TextStyle(fontSize: 11, color: Colors.black54),
+                                          subject,
+                                          style: const TextStyle(fontSize: 11, color: Color(0xFF0F766E), fontWeight: FontWeight.w600),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
                                     ),

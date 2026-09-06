@@ -34,17 +34,6 @@ class _ClassesPageState extends State<ClassesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Penugasan Kelas'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ApiClient.instance.logout();
-              if (mounted && context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
-              }
-            },
-          ),
-        ],
       ),
       body: _error != null
           ? Center(
@@ -113,9 +102,11 @@ class _ClassesPageState extends State<ClassesPage> {
                               );
                             }
                             final c = _classes![i - 1];
-                            final subj = c['subject'] as String? ?? 'Umum';
-                            final cName = c['name'] as String? ?? 'Kelas';
-                            final displayTitle = cName.startsWith(subj) ? cName : '$subj — $cName';
+                            final rawName = (c['name'] as String? ?? 'Kelas').trim();
+                            final subj = (c['subject'] as String? ?? '').trim().isNotEmpty
+                                ? (c['subject'] as String).trim()
+                                : (rawName.contains(' — ') ? rawName.split(' — ')[0].trim() : 'Umum');
+                            final cName = rawName.contains(' — ') ? rawName.split(' — ')[1].trim() : rawName;
 
                             return Container(
                               decoration: BoxDecoration(
@@ -133,12 +124,12 @@ class _ClassesPageState extends State<ClassesPage> {
                                   child: const Icon(Icons.school, color: Color(0xFF0F766E)),
                                 ),
                                 title: Text(
-                                  displayTitle,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  cName,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
                                 ),
                                 subtitle: Text(
-                                  'Rombel: $cName · Mapel: $subj',
-                                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                                  'Mata Pelajaran: $subj',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF0F766E), fontWeight: FontWeight.w500),
                                 ),
                                 trailing: const Icon(Icons.chevron_right, color: Colors.black26),
                                 onTap: () => Navigator.of(context).pushNamed('/exams', arguments: c['id']),

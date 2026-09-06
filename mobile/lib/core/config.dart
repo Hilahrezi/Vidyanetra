@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class AppConfig {
   static const String defaultApiBase = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'http://100.78.211.26:8000', // Default Tailscale PC
+    defaultValue: 'https://vidyantera.onrender.com',
   );
 
   static const _storage = FlutterSecureStorage();
