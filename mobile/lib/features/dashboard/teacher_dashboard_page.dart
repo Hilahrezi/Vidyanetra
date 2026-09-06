@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
-import '../../core/config.dart';
 
 class TeacherDashboardPage extends StatefulWidget {
   const TeacherDashboardPage({super.key});
@@ -61,61 +60,6 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
     }
   }
 
-  Future<void> _showAddClassDialog() async {
-    final nameCtrl = TextEditingController();
-    final gradeCtrl = TextEditingController(text: '8');
-
-    final created = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Tambah Kelas Baru'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nama Kelas',
-                hintText: 'mis. Kelas 8A',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: gradeCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Tingkat / Grade',
-                hintText: 'mis. 8',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          FilledButton(
-            onPressed: () async {
-              if (nameCtrl.text.trim().isEmpty) return;
-              try {
-                await ApiClient.instance.createClass(nameCtrl.text.trim(), gradeCtrl.text.trim());
-                if (ctx.mounted) Navigator.pop(ctx, true);
-              } catch (e) {
-                if (ctx.mounted) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Gagal menambah kelas: $e')));
-                }
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-
-    if (created == true) {
-      _loadDashboardData();
-    }
-  }
-
   void _showSelectExamForScan() {
     if (_exams == null || _exams!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -126,6 +70,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -135,31 +80,102 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.camera_alt, color: Colors.indigo),
-                SizedBox(width: 8),
-                Text('Pilih Ujian untuk Di-Scan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE6F4F1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.camera_alt, color: Color(0xFF0F766E)),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Pilih Ujian untuk Di-Scan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text('Pilih lembar ujian yang akan dikoreksi', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                    ],
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 300),
-              child: ListView.builder(
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55),
+              child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _exams!.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, i) {
                   final e = _exams![i];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(e['title'] ?? 'Ujian'),
-                      subtitle: Text('Total Skor: ${e['total_score']}'),
-                      trailing: const Icon(Icons.chevron_right),
+                  final className = e['class_name'] as String? ?? 'Kelas #${e['class_id']}';
+                  final subject = e['subject'] as String? ?? (className.contains(' — ') ? className.split(' — ')[0] : 'Mata Pelajaran');
+                  final cleanClass = className.contains(' — ') ? className.split(' — ')[1] : className;
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
                       onTap: () {
                         Navigator.pop(ctx);
                         Navigator.of(context).pushNamed('/scan', arguments: e['id']);
                       },
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE6F4F1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFCCFBF1)),
+                                  ),
+                                  child: Text(
+                                    '📚 $subject',
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: Text(
+                                    '🏫 $cleanClass',
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF94A3B8)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              e['title'] ?? 'Ujian',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Total Bobot: ${e['total_score'] ?? 0} pt · ${e['total_students'] ?? 0} Siswa Terdaftar',
+                              style: const TextStyle(fontSize: 11, color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 },
@@ -190,27 +206,39 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.insights, color: Colors.amber),
-                SizedBox(width: 8),
-                Text('Pilih Ujian untuk Analitik', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.insights, color: Color(0xFFD97706)),
+                ),
+                const SizedBox(width: 10),
+                const Text('Pilih Ujian untuk Analitik', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 12),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 300),
-              child: ListView.builder(
+              child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _exams!.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, i) {
                   final e = _exams![i];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
                     child: ListTile(
-                      title: Text(e['title'] ?? 'Ujian'),
-                      subtitle: Text('Total Skor: ${e['total_score']}'),
-                      trailing: const Icon(Icons.analytics, color: Colors.amber),
+                      title: Text(e['title'] ?? 'Ujian', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      subtitle: Text('Total Bobot: ${e['total_score']} pt', style: const TextStyle(fontSize: 11)),
+                      trailing: const Icon(Icons.analytics, color: Color(0xFFD97706)),
                       onTap: () {
                         Navigator.pop(ctx);
                         Navigator.of(context).pushNamed('/analytics', arguments: e['id']);
@@ -287,14 +315,14 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF3730A3), Color(0xFF4F46E5)],
+                              colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.indigo.withOpacity(0.2),
+                                color: const Color(0xFF0F766E).withOpacity(0.2),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -307,7 +335,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                 backgroundColor: Colors.white,
                                 child: Text(
                                   initials,
-                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.indigo),
+                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -360,8 +388,8 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                 title: 'Scan Ujian',
                                 subtitle: 'Koreksi Lembar',
                                 icon: Icons.camera_alt,
-                                color: const Color(0xFF4F46E5),
-                                bgColor: const Color(0xFFEEF2FF),
+                                color: const Color(0xFF0F766E),
+                                bgColor: const Color(0xFFE6F4F1),
                                 onTap: _showSelectExamForScan,
                               ),
                             ),
@@ -372,8 +400,8 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                 title: 'Buat Ujian',
                                 subtitle: 'Susun Soal',
                                 icon: Icons.edit_note,
-                                color: const Color(0xFF059669),
-                                bgColor: const Color(0xFFECFDF5),
+                                color: const Color(0xFF0D9488),
+                                bgColor: const Color(0xFFF0FDFA),
                                 onTap: () async {
                                   final res = await Navigator.of(context).pushNamed('/exam-editor');
                                   if (res == true) _loadDashboardData();
@@ -404,10 +432,9 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                               'Kelas yang Diampu (${_classes?.length ?? 0})',
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
                             ),
-                            TextButton.icon(
-                              onPressed: _showAddClassDialog,
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Tambah'),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pushNamed('/classes'),
+                              child: const Text('Lihat Semua'),
                             ),
                           ],
                         ),
@@ -422,7 +449,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                               border: Border.all(color: Colors.black12),
                             ),
                             child: const Center(
-                              child: Text('Belum ada kelas. Klik "+ Tambah" untuk membuat kelas.'),
+                              child: Text('Belum ada kelas yang ditugaskan oleh Administrator.'),
                             ),
                           )
                         else
@@ -546,26 +573,26 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFEEF2FF),
+                                            color: const Color(0xFFE6F4F1),
                                             borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(color: const Color(0xFFC7D2FE)),
+                                            border: Border.all(color: const Color(0xFFCCFBF1)),
                                           ),
                                           child: Text(
                                             '📚 $subject',
-                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigo),
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
                                           ),
                                         ),
                                         const SizedBox(width: 6),
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFF0F9FF),
+                                            color: const Color(0xFFF1F5F9),
                                             borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(color: const Color(0xFFBAE6FD)),
+                                            border: Border.all(color: const Color(0xFFE2E8F0)),
                                           ),
                                           child: Text(
                                             '🏫 $cleanClass',
-                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0369A1)),
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
                                           ),
                                         ),
                                       ],
@@ -577,10 +604,10 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                         Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
-                                            color: Colors.indigo.withOpacity(0.1),
+                                            color: const Color(0xFFE6F4F1),
                                             borderRadius: BorderRadius.circular(8),
                                           ),
-                                          child: const Icon(Icons.assignment, color: Colors.indigo, size: 20),
+                                          child: const Icon(Icons.assignment, color: Color(0xFF0F766E), size: 20),
                                         ),
                                         const SizedBox(width: 10),
                                         Expanded(
@@ -616,7 +643,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               const Text('Progres Koreksi', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.black54)),
-                                              Text('$finalized/${e['total_students'] ?? 0} Siswa ($progressPct%)', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                                              Text('$finalized/${e['total_students'] ?? 0} Siswa ($progressPct%)', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F766E))),
                                             ],
                                           ),
                                           const SizedBox(height: 4),
@@ -626,7 +653,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                               value: progressPct / 100,
                                               minHeight: 5,
                                               backgroundColor: const Color(0xFFE2E8F0),
-                                              color: progressPct == 100 ? Colors.green : Colors.indigo,
+                                              color: progressPct == 100 ? const Color(0xFF10B981) : const Color(0xFF0F766E),
                                             ),
                                           ),
                                         ],
@@ -669,7 +696,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                                           style: FilledButton.styleFrom(
                                             visualDensity: VisualDensity.compact,
                                             padding: const EdgeInsets.symmetric(horizontal: 10),
-                                            backgroundColor: Colors.indigo,
+                                            backgroundColor: const Color(0xFF0F766E),
                                           ),
                                           icon: const Icon(Icons.camera_alt, size: 16),
                                           label: const Text('Scan', style: TextStyle(fontSize: 11)),

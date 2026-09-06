@@ -485,12 +485,6 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedClass = _classes.firstWhere(
-      (c) => c['id'] == _selectedClassId,
-      orElse: () => null,
-    );
-    final currentSubject = selectedClass?['subject'] as String? ?? 'Umum';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(_currentExamId == null ? 'Buat Ujian Baru' : (_exam?['title'] ?? 'Edit Soal Ujian')),
@@ -516,7 +510,7 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Text('1. Informasi Ujian & Penugasan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              const Text('Informasi Ujian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                               const SizedBox(height: 12),
                               if (_classes.isEmpty)
                                 const Text('Belum ada penugasan kelas dari Administrator.')
@@ -524,7 +518,7 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                 DropdownButtonFormField<int>(
                                   value: _selectedClassId,
                                   decoration: const InputDecoration(
-                                    labelText: 'Pilih Penugasan Kelas',
+                                    labelText: 'Pilih Kelas',
                                     border: OutlineInputBorder(),
                                     isDense: true,
                                   ),
@@ -541,27 +535,6 @@ class _ExamEditorPageState extends State<ExamEditorPage> {
                                       _selectedClassId = v;
                                     });
                                   },
-                                ),
-                                const SizedBox(height: 10),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE6F4F1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFFCCFBF1)),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.info_outline, size: 16, color: Color(0xFF0F766E)),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Mata Pelajaran: $currentSubject (Sesuai penugasan Admin)',
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ),
                                 const SizedBox(height: 14),
                                 TextField(

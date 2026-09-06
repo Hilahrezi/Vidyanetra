@@ -222,7 +222,7 @@ class _ScanPageState extends State<ScanPage> with SingleTickerProviderStateMixin
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vidyanetra Scanner'),
+        title: const Text('Scan LJK'),
         actions: [
           if (_pageCrops.isNotEmpty)
             TextButton.icon(
@@ -341,6 +341,37 @@ class _ScanPageState extends State<ScanPage> with SingleTickerProviderStateMixin
                                       style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                                     ),
                                   ],
+                                ),
+                              ),
+                            ),
+
+                            // Bottom Guidance Pill: 4 Corner Markers
+                            Positioned(
+                              bottom: 14,
+                              left: 14,
+                              right: 14,
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0F172A).withOpacity(0.85),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white24),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.center_focus_strong, color: Color(0xFF2DD4BF), size: 16),
+                                      SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          'Pastikan 4 kotak hitam di sudut lembar masuk bingkai',
+                                          style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

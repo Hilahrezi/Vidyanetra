@@ -212,23 +212,27 @@ class _LoginPageState extends State<LoginPage> {
                 // Vidyanetra Brand Logo
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.all(18),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0F766E).withOpacity(0.3),
+                          color: const Color(0xFF0F766E).withOpacity(0.12),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.remove_red_eye_rounded, size: 48, color: Colors.white),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/images/vidyanetra_logo.png',
+                        height: 76,
+                        width: 76,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

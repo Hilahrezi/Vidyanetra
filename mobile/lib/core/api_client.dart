@@ -91,13 +91,6 @@ class ApiClient {
   // ---- Master data ----
   Future<List<dynamic>> getClasses() => _guard<List<dynamic>>(() => _dio.get('/classes'));
 
-  Future<Map<String, dynamic>> createClass(String name, String gradeLevel, {String subject = 'Umum'}) =>
-      _guard<Map<String, dynamic>>(() => _dio.post('/classes', data: {
-            'name': name,
-            'grade_level': gradeLevel,
-            'subject': subject,
-          }));
-
   Future<dynamic> getExam(int examId) => _guard<dynamic>(() => _dio.get('/exams/$examId'));
 
   Future<List<dynamic>> getExams({int? classId}) => _guard<List<dynamic>>(

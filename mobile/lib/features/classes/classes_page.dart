@@ -86,10 +86,33 @@ class _ClassesPageState extends State<ClassesPage> {
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.all(16),
-                          itemCount: _classes!.length,
+                          itemCount: _classes!.length + 1,
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
                           itemBuilder: (context, i) {
-                            final c = _classes![i];
+                            if (i == 0) {
+                              return Container(
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(bottom: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0FDFA),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFCCFBF1)),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.info_outline, size: 18, color: Color(0xFF0F766E)),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'Penugasan kelas dan rombel dikelola langsung oleh Administrator melalui Web Dashboard.',
+                                        style: TextStyle(fontSize: 11, color: Color(0xFF0F766E), fontWeight: FontWeight.w500),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            final c = _classes![i - 1];
                             final subj = c['subject'] as String? ?? 'Umum';
                             final cName = c['name'] as String? ?? 'Kelas';
                             final displayTitle = cName.startsWith(subj) ? cName : '$subj — $cName';
