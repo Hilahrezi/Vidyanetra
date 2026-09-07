@@ -1,8 +1,8 @@
 """Deteksi tanda X pada kotak opsi MCQ — Computer Vision murni (tanpa AI).
 
-Crop MCQ sudah ter-warp ke geometri template (76x16mm) sehingga posisi 4 kotak
-opsi SELALU tetap: fraksi berikut dihitung dari template_service (kotak 14mm,
-gap 6mm, mulai x=27mm dalam cell 25..101mm).
+Crop MCQ sudah ter-warp ke geometri template (44x8mm) sehingga posisi 4 kotak
+opsi SELALU tetap: fraksi berikut dihitung dari template_service (kotak 8mm,
+gap 4mm, mulai x=25mm dalam cell 25..69mm).
 
 Ambigu (X ganda/tak jelas/tanpa tanda) -> hasil dict ambiguous=True, caller
 menentukan fallback (Gemini).
@@ -16,12 +16,12 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Fraksi [x0, x1] tiap kotak opsi dalam crop MCQ (dari geometri template)
+# Fraksi [x0, x1] tiap kotak opsi dalam crop MCQ (dari geometri template 44x8mm)
 MCQ_BOX_FRACTIONS = [
-    (0.0263, 0.2105),  # a
-    (0.2895, 0.4737),  # b
-    (0.5526, 0.7368),  # c
-    (0.8158, 1.0000),  # d
+    (0.0000, 0.1818),  # a (0..8mm / 44mm)
+    (0.2727, 0.4545),  # b (12..20mm / 44mm)
+    (0.5455, 0.7273),  # c (24..32mm / 44mm)
+    (0.8182, 1.0000),  # d (36..44mm / 44mm)
 ]
 MCQ_LETTERS = ("a", "b", "c", "d")
 

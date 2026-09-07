@@ -60,40 +60,40 @@ def render_essay(text: str, size: tuple[int, int], font_path, font_size: int) ->
 def render_mcq_option(
     key: str,
     font_path=None,
-    box_w_mm=14,
-    box_h_mm=16,
+    box_w_mm=8,
+    box_h_mm=8,
     extra_x: str | None = None,
     no_mark: bool = False,
     font_index: int = 0,
 ) -> Image.Image:
     """Render baris soal MCQ: 4 kotak a/b/c/d + tanda X pada opsi benar.
 
-    Ukuran sesuai template: kotak 14x16mm @300dpi = 165x189px, gap 6mm=71px.
+    Ukuran sesuai template: kotak 8x8mm @300dpi = 94x94px, gap 4mm=47px, cell 44x8mm=520x94px.
     - extra_x: X kedua (simulasi ambigu)
     - no_mark: tanpa tanda sama sekali
     - font_index: pilih font tulisan tangan dari HAND_FONTS
     """
     px = 300 / 25.4
-    w = int(76 * px)  # area baris sesuai template (76mm)
-    h = int(16 * px)
+    w = int(44 * px)  # area baris sesuai template (44mm)
+    h = int(8 * px)
     img = Image.new("RGB", (w, h), "white")
     draw = ImageDraw.Draw(img)
     if font_path is None:
         font_path = HAND_FONTS[font_index % len(HAND_FONTS)][1]
-    label_font = load_font(font_path, 30)
+    label_font = load_font(font_path, 20)
 
     for i, opt in enumerate(("a", "b", "c", "d")):
-        x0 = int((6 + i * (14 + 6)) * px)  # offset kiri 6mm agar crop terpusat
+        x0 = int((i * (8 + 4)) * px)
         y0 = 0
         bw, bh = int(box_w_mm * px), int(box_h_mm * px)
-        draw.rectangle((x0, y0, x0 + bw, y0 + bh), outline=(40, 40, 40), width=3)
+        draw.rectangle((x0, y0, x0 + bw, y0 + bh), outline=(40, 40, 40), width=2)
         # huruf opsi kecil di tengah kotak
         draw.text((x0 + bw // 2, y0 + bh // 2), opt, fill=(60, 60, 60), font=label_font, anchor="mm")
         if (not no_mark) and (opt == key or opt == extra_x):
             # tanda X: dua garis diagonal
-            m = 18
-            draw.line((x0 + m, y0 + m, x0 + bw - m, y0 + bh - m), fill=(20, 20, 20), width=8)
-            draw.line((x0 + bw - m, y0 + m, x0 + m, y0 + bh - m), fill=(20, 20, 20), width=8)
+            m = 12
+            draw.line((x0 + m, y0 + m, x0 + bw - m, y0 + bh - m), fill=(20, 20, 20), width=6)
+            draw.line((x0 + bw - m, y0 + m, x0 + m, y0 + bh - m), fill=(20, 20, 20), width=6)
     return img
 
 

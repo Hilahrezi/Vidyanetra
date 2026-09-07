@@ -64,15 +64,15 @@ FIELD_ROWS = {
     "tanggal": (141.0, 169.0, 26.0),
 }
 
-# ---- Grid ----
-CELL_SIZE_MM = {"mcq": (76.0, 16.0), "short": (100.0, 18.0), "essay": (170.0, 45.0)}
-ROW_GAP_MM = 8.0
-NUM_LABEL_X_MM = 15.0
-NUM_LABEL_W_MM = 10.0
-MCQ_OPTIONS = ("a", "b", "c", "d")
-MCQ_BOX_SIZE_MM = (14.0, 16.0)
-MCQ_BOX_GAP_MM = 6.0
-MCQ_FIRST_X_MM = 27.0  # kotak a..d: 27..101mm (dalam cell 25..101mm)
+# ---- Grid (Format Kompak 8mm) ----
+CELL_SIZE_MM = {"mcq": (44.0, 8.0), "short": (120.0, 8.0), "essay": (170.0, 40.0)}
+ROW_GAP_MM = 4.0
+BOX_START_X_MM = 25.0
+NUMBER_RIGHT_X_MM = 23.0  # Nomor urut rata kanan di X=23mm (2mm sebelum kotak)
+MCQ_OPTIONS = ("A", "B", "C", "D")
+MCQ_BOX_SIZE_MM = (8.0, 8.0)  # 8x8 mm
+MCQ_BOX_GAP_MM = 4.0
+MCQ_FIRST_X_MM = 25.0  # kotak a..d: 25..69mm (dalam cell 25..69mm)
 BOTTOM_LIMIT_MM = PAGE_H_MM - MARGIN_MM - MARKER_SIZE_MM - MARKER_RING_MM  # 268
 
 # ---- Footer ----
@@ -141,7 +141,7 @@ def compute_layout(questions: list[str]) -> list[TemplateLayout]:
             page = TemplateLayout(markers_px=_marker_centers_px())
             y_mm = GRID_Y0_SUB_MM
 
-        cell_x_mm = NUM_LABEL_X_MM + NUM_LABEL_W_MM
+        cell_x_mm = BOX_START_X_MM
         page.cells.append(
             CellSpec(
                 question_number=number,
@@ -229,23 +229,33 @@ def build_pdf(questions: list[str], title: str, class_name: str, out_pdf: Path, 
             x_mm = cell.x / PX_PER_MM
             y_mm = cell.y / PX_PER_MM
 
+            # Angka nomor urut rata kanan di NUMBER_RIGHT_X_MM, sejajar baris 1 (8mm)
+            c.setFont("Helvetica-Bold", 9)
+            c.drawRightString(NUMBER_RIGHT_X_MM * MM, (PAGE_H_MM - y_mm - 8.0 / 2 - 2.5) * MM, f"{cell.question_number}.")
+
             if cell.type == "mcq":
-                # 4 kotak opsi a/b/c/d
+                # 4 kotak opsi A/B/C/D (8x8 mm)
                 for i, opt in enumerate(MCQ_OPTIONS):
-                    ox = MCQ_FIRST_X_MM + i * (MCQ_BOX_SIZE_MM[0] + MCQ_BOX_GAP_MM)
-                    c.setLineWidth(1.2)
+                    ox = x_mm + i * (MCQ_BOX_SIZE_MM[0] + MCQ_BOX_GAP_MM)
+                    c.setLineWidth(1.0)
                     c.rect(ox * MM, (PAGE_H_MM - y_mm - MCQ_BOX_SIZE_MM[1]) * MM,
                            MCQ_BOX_SIZE_MM[0] * MM, MCQ_BOX_SIZE_MM[1] * MM)
-                    c.setFont("Helvetica-Bold", 9)
+                    c.setFont("Helvetica-Bold", 7.5)
                     c.drawCentredString((ox + MCQ_BOX_SIZE_MM[0] / 2) * MM,
-                                        (PAGE_H_MM - y_mm - MCQ_BOX_SIZE_MM[1] / 2) * MM, opt)
-                c.setFont("Helvetica-Bold", 10)
-                c.drawRightString(NUM_LABEL_X_MM * MM, (PAGE_H_MM - y_mm - h_mm / 2) * MM, f"{cell.question_number}.")
+                                        (PAGE_H_MM - y_mm - MCQ_BOX_SIZE_MM[1] / 2 - 2.2) * MM, opt)
             else:
-                c.setLineWidth(1.4)
+                c.setLineWidth(1.1)
                 c.rect(x_mm * MM, (PAGE_H_MM - y_mm - h_mm) * MM, w_mm * MM, h_mm * MM)
-                c.setFont("Helvetica-Bold", 12)
-                c.drawRightString((x_mm - 2) * MM, (PAGE_H_MM - y_mm - h_mm / 2) * MM, f"{cell.question_number}.")
+                if cell.type == "short":
+                    c.setFont("Helvetica-Oblique", 6.5)
+                    c.setFillColorRGB(0.5, 0.5, 0.5)
+                    c.drawString((x_mm + 2) * MM, (PAGE_H_MM - y_mm - h_mm + 2) * MM, "Isian singkat (1 baris)")
+                    c.setFillColorRGB(0, 0, 0)
+                elif cell.type == "essay":
+                    c.setFont("Helvetica-Oblique", 6.5)
+                    c.setFillColorRGB(0.5, 0.5, 0.5)
+                    c.drawString((x_mm + 2) * MM, (PAGE_H_MM - y_mm - 6) * MM, "Jawaban esai / uraian (5 baris)")
+                    c.setFillColorRGB(0, 0, 0)
 
         _draw_footer(c, page_index, total_pages)
 

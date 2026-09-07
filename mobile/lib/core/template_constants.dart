@@ -20,19 +20,20 @@ const List<List<double>> markerCentersPx = [
   [(210 - 18) * mmToPx, (297 - 18) * mmToPx], // BR
 ];
 
-/// Ukuran kotak jawaban per tipe (mm). MCQ = area baris berisi 4 kotak opsi.
+/// Ukuran kotak jawaban per tipe (mm). MCQ = area baris berisi 4 kotak opsi 8x8mm.
 const Map<String, List<double>> cellSizeMm = {
-  'mcq': [76, 16],
-  'short': [100, 18],
-  'essay': [170, 45],
+  'mcq': [44, 8],
+  'short': [120, 8],
+  'essay': [170, 40],
 };
 
-/// Konstanta tata letak (mm) — mirror template_service.py (redesain Fase 3-R).
+/// Konstanta tata letak (mm) — mirror template_service.py (Format Kompak 8mm).
 const double marginMm = 15;
 const double numLabelWMm = 10;
+const double boxStartX = 25.0; // 15 + 10
 const double gridY0Mm = 97; // halaman 1 (setelah kop + identitas ramping)
 const double gridY0SubMm = 32; // halaman 2+
-const double rowGapMm = 8;
+const double rowGapMm = 4;
 const double bottomLimitMm = 297 - marginMm - 12 - 2;
 
 /// Data satu kotak jawaban di ruang warp (px).
@@ -62,7 +63,7 @@ List<List<CellRect>> computeLayout(List<String> questions) {
     page.add(CellRect(
       i + 1,
       qtype,
-      ((marginMm + numLabelWMm) * mmToPx).round(),
+      (boxStartX * mmToPx).round(),
       (yMm * mmToPx).round(),
       (wMm * mmToPx).round(),
       (hMm * mmToPx).round(),

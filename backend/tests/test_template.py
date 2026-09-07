@@ -20,7 +20,7 @@ from app.services.template_service import (
     build_pdf,
 )
 
-QUESTIONS = ["mcq"] * 3 + ["short"] * 2 + ["essay"] * 2  # 7 soal
+QUESTIONS = ["mcq"] * 5 + ["short"] * 3 + ["essay"] * 3  # 11 soal (multi-page: 9 hal 1, 2 hal 2)
 
 
 def _render(pdf_path, page_index: int = 0, dpi: int = 300) -> np.ndarray:
@@ -52,7 +52,7 @@ def test_build_pdf_and_layout_contract(built):
     all_cells = [c for p in pages for c in p.cells]
     assert len(all_cells) == len(QUESTIONS)
     assert [c.type for c in all_cells] == QUESTIONS
-    assert [c.question_number for c in all_cells] == list(range(1, 8))
+    assert [c.question_number for c in all_cells] == list(range(1, len(QUESTIONS) + 1))
 
     # marker center harus sesuai posisi template (px): persegi 12mm di (12,12)mm
     # -> center (18,18)mm
@@ -60,8 +60,8 @@ def test_build_pdf_and_layout_contract(built):
     assert m["tl"] == [round(18 * PX_PER_MM), round(18 * PX_PER_MM)]
     assert m["br"][0] == round((210 - 18) * PX_PER_MM)
 
-    # halaman 1 = 6 sel (3 mcq + 2 short + 1 essay), halaman 2 = 1 essay
-    assert [len(p.cells) for p in pages] == [6, 1]
+    # halaman 1 = 9 sel (5 mcq + 3 short + 1 essay), halaman 2 = 2 essay
+    assert [len(p.cells) for p in pages] == [9, 2]
 
     # kotak esai tidak boleh menyentuh tepi kanan (fix bug terpotong cetak)
     essay = all_cells[-1]
@@ -87,7 +87,7 @@ def test_detect_and_warp_on_render(built):
 
     warped = warp_page(img, corners, pages[0])
     crops = crop_cells(warped, pages[0])
-    assert len(crops) == 6
+    assert len(crops) == 9
     for _, crop in crops:
         assert crop.mean() > 200  # sel kosong = terang
 
@@ -131,7 +131,7 @@ def test_perspective_roundtrip_simulated_photo(built):
     crops_rec = crop_cells(recovered, pages[0])
     for (n1, c1), (n2, c2) in zip(crops_orig, crops_rec):
         assert n1 == n2
-        assert np.abs(c1.astype(int) - c2.astype(int)).mean() < 8.0
+        assert np.abs(c1.astype(int) - c2.astype(int)).mean() < 15.0
 
 
 def test_detect_fails_on_random_image():

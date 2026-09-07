@@ -41,34 +41,36 @@ Di setiap 4 sudut halaman dicetak kotak hitam solid berukuran $12 \times 12\text
 
 ---
 
-## 📦 3. Sistem Grid Kotak Jawaban
+## 📦 3. Sistem Grid Kotak Jawaban (Format Kompak 8 mm)
 
 ```
-MCQ Option Box (a/b/c/d):
-┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
-│    a    │   │    b    │   │    c    │   │    d    │  (14 x 16 mm, gap 6 mm)
-└─────────┘   └─────────┘   └─────────┘   └─────────┘
-◄────────────────────── 76 mm ──────────────────────►
+MCQ Option Box (A/B/C/D):
+┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐
+│   A   │   │   B   │   │   C   │   │   D   │  (8 x 8 mm, gap 4 mm)
+└───────┘   └───────┘   └───────┘   └───────┘
+◄────────────────────── 44 mm ──────────────────────►
 
 Isian Singkat Box:
-┌───────────────────────────────────────────────────┐
-│                                                   │  (100 x 18 mm)
-└───────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │  (120 x 8 mm / 1 baris)
+└──────────────────────────────────────────────────────────────┘
 
 Esai / Uraian Box:
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                         │
-│                                                                         │  (170 x 50 mm)
+│                                                                         │  (170 x 40 mm / 5 baris)
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+* **Penyelarasan Nomor Urut:** Rata kanan di $x = 23.0\text{ mm}$ (sejajar 2 mm sebelum kotak jawaban pada $x = 25.0\text{ mm}$).
+* **Jarak Antar Soal (`ROW_GAP`):** $4.0\text{ mm}$.
 * **Tata Letak Halaman 1:**
   - Kop Sekolah & Ujian: $y = 29\text{--}65\text{ mm}$ (aman di bawah marker TL).
-  - Identitas Siswa: $y = 66\text{--}92\text{ mm}$ (Nama, Kelas, No. Absen, Tanggal).
-  - Grid Jawaban: dimulai dari $y = 97\text{ mm}$.
+  - Identitas Siswa: $y = 70\text{--}92\text{ mm}$ (Nama, Kelas, No. Absen, Tanggal).
+  - Grid Jawaban: dimulai dari $y = 97\text{ mm}$ (muat hingga 14 soal MCQ).
 * **Tata Letak Halaman 2+:**
-  - Grid Jawaban dimulai langsung dari $y = 32\text{ mm}$ (memaksimalkan kapasitas halaman).
+  - Grid Jawaban dimulai langsung dari $y = 32\text{ mm}$ (muat hingga 20 soal MCQ).
 
 ---
 
@@ -91,26 +93,26 @@ Setiap kali PDF di-generate, sistem memproduksi kontrak koordinat geometris:
         {
           "question_number": 1,
           "type": "mcq",
-          "x": 354,
-          "y": 1098,
-          "w": 898,
-          "h": 189
+          "x": 295,
+          "y": 1146,
+          "w": 520,
+          "h": 94
         },
         {
           "question_number": 2,
           "type": "short",
-          "x": 354,
-          "y": 1335,
-          "w": 1181,
-          "h": 213
+          "x": 295,
+          "y": 1287,
+          "w": 1417,
+          "h": 94
         },
         {
           "question_number": 3,
           "type": "essay",
-          "x": 354,
-          "y": 1596,
+          "x": 295,
+          "y": 1429,
           "w": 2008,
-          "h": 591
+          "h": 472
         }
       ]
     }
